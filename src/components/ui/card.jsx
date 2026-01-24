@@ -20,5 +20,8 @@ function CardContent({ className, ...props }) {
 function CardFooter({ className, ...props }) {
   return <div data-slot="card-footer" className={cn("flex items-center px-6 [.border-t]:pt-6", className)} {...props} />
 }
+function CardDescription({ className, ...props }) {
+  return <div data-slot="card-description" className={cn("text-sm text-muted-foreground", className)} {...props} />
+}
 
-export { Card, CardHeader, CardFooter, CardTitle, CardContent }
+export { Card, CardHeader, CardFooter, CardTitle, CardContent, CardDescription }
