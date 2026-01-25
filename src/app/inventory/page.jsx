@@ -1,6 +1,7 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { api_service } from "@/lib/api_service";
 import { 
   Plus, 
   Search, 
@@ -30,7 +31,19 @@ const initial_products = [
 ];
 
 export default function InventoryPage() {
-  const [products] = useState(initial_products);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api_service.get_products()
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  if (loading) return <div>Đang tải dữ liệu từ cổng 9999...</div>;
 
   return (
     <div className="space-y-6">
@@ -92,12 +105,12 @@ export default function InventoryPage() {
                   <TableCell className="text-center">
                     <span className={p.stock < 10 ? "text-red-500 font-bold flex items-center justify-center gap-1" : ""}>
                       {p.stock < 10 && <AlertTriangle size={14} />}
-                      {p.stock.toLocaleString()}
+                      <span suppressHydrationWarning>{p.stock.toLocaleString()}</span>
                     </span>
                   </TableCell>
                   <TableCell>{p.unit}</TableCell>
                   <TableCell className="text-right">{p.cost_price.toLocaleString()}đ</TableCell>
-                  <TableCell className="text-right font-bold">{p.sale_price.toLocaleString()}đ</TableCell>
+                  <TableCell suppressHydrationWarning className="text-right font-bold">{p.sale_price.toLocaleString()}đ</TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
                       <Button variant="ghost" size="icon-sm" className="text-slate-500">

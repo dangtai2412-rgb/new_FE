@@ -87,7 +87,7 @@ export default function ReportsPage() {
                   <TableCell className="border-r font-medium">{item.invoice}</TableCell>
                   <TableCell className="border-r">{item.desc}</TableCell>
                   <TableCell className="border-r">{item.group_item}</TableCell>
-                  <TableCell className="border-r text-right font-bold">{item.amount.toLocaleString()}đ</TableCell>
+                  <TableCell suppressHydrationWarning className="border-r text-right font-bold">{item.amount.toLocaleString()}đ</TableCell>
                   <TableCell className="text-right">{item.tax_rate}</TableCell>
                 </TableRow>
               ))}
