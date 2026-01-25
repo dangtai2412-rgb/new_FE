@@ -12,11 +12,20 @@ export default function LoginPage() {
 
   const handle_submit = async (e) => {
     e.preventDefault();
-    const data = await api_service.login(form.email, form.password);
-    if (data.access_token) {
-      router.push("/"); // Thành công thì vào trang chủ
-    } else {
-      alert("Sai tài khoản hoặc mật khẩu!");
+    try {
+      const data = await api_service.login(form.email, form.password);
+      
+      // Sửa ở đây: Kiểm tra 'data.token' thay vì 'data.access_token'
+      if (data.token) {
+        console.log("Đăng nhập thành công, token:", data.token);
+        router.push("/"); // Hoặc chuyển hướng sang trang bạn muốn
+      } else {
+        // Nếu có lỗi trả về từ BE thì hiện lỗi đó, không thì hiện mặc định
+        alert(data.error || "Sai tài khoản hoặc mật khẩu!");
+      }
+    } catch (error) {
+      console.error("Lỗi kết nối:", error);
+      alert("Không thể kết nối đến server Backend!");
     }
   };
 
