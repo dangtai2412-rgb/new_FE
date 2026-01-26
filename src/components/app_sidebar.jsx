@@ -13,7 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const menu_items = [
-  { title: "Tổng quan", icon: LayoutDashboard, href: "/" },
+  { title: "Tổng quan", icon: LayoutDashboard, href: "/dashboard" },
   { title: "Bán hàng (POS)", icon: ShoppingCart, href: "/pos" },
   { title: "Kho & Sản phẩm", icon: Package, href: "/inventory" },
   { title: "Đối tác & Công nợ", icon: Users, href: "/debt" },
