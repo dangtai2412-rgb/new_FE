@@ -5,14 +5,37 @@ import { api_service } from "@/lib/api_service";
 import { Search, Trash2, ShoppingCart, Plus, Minus, Loader2, Star, Tag } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
-// --- DỮ LIỆU MẪU (Dùng để lấp đầy chỗ trống khi chưa có hàng thật) ---
+// --- DỮ LIỆU MẪU ĐA DẠNG (Bao gồm các hãng Xi măng nổi tiếng thế giới & VN) ---
 const DEMO_PRODUCTS = [
-  { id: 101, name: "Xi măng Hà Tiên (Bao 50kg)", price: 85000, image: "🏗️" },
-  { id: 102, name: "Gạch ống 4 lỗ (Viên)", price: 1200, image: "🧱" },
-  { id: 103, name: "Cát xây tô (Khối)", price: 350000, image: "⏳" },
-  { id: 104, name: "Sơn Dulux Trắng (Thùng 18L)", price: 1850000, image: "🎨" },
-  { id: 105, name: "Thép cuộn Pomina (Kg)", price: 18000, image: "⛓️" },
-  { id: 106, name: "Đá 1x2 xanh (Khối)", price: 420000, image: "🪨" },
+  // 1. Nhóm Xi măng (Các thương hiệu lớn)
+  { id: 101, name: "Xi măng Holcim Đa Dụng (Bao 50kg)", price: 89000, image: "🏗️" }, // Thụy Sĩ
+  { id: 102, name: "Xi măng Lafarge Power (Bao 50kg)", price: 92000, image: "🏗️" }, // Pháp
+  { id: 103, name: "Xi măng Cemex Ruby (Bao 50kg)", price: 88000, image: "🏗️" }, // Mexico
+  { id: 104, name: "Xi măng Heidelberg (Bao 50kg)", price: 95000, image: "🏗️" }, // Đức
+  { id: 105, name: "Xi măng Vicem Hà Tiên 1 (Bao 50kg)", price: 86000, image: "🏗️" }, // Việt Nam
+  { id: 106, name: "Xi măng Nghi Sơn PCB40 (Bao 50kg)", price: 84000, image: "🏗️" }, // Liên doanh Nhật
+  { id: 107, name: "Xi măng Trắng SCG (Bao 40kg)", price: 180000, image: "✨" }, // Thái Lan
+
+  // 2. Nhóm Sắt Thép
+  { id: 201, name: "Thép cuộn Pomina Ø6 (Kg)", price: 18500, image: "⛓️" },
+  { id: 202, name: "Thép thanh vằn Hòa Phát D10 (Cây 11.7m)", price: 115000, image: "⛓️" },
+  { id: 203, name: "Thép Việt Nhật Vinakyoei D16 (Cây)", price: 290000, image: "⛓️" },
+
+  // 3. Nhóm Gạch - Cát - Đá
+  { id: 301, name: "Gạch ống 4 lỗ Tuynel (Viên)", price: 1200, image: "🧱" },
+  { id: 302, name: "Gạch Block không nung (Viên)", price: 1600, image: "🧱" },
+  { id: 303, name: "Cát vàng bê tông hạt lớn (Khối)", price: 450000, image: "⏳" },
+  { id: 304, name: "Cát xây tô (Khối)", price: 350000, image: "⏳" },
+  { id: 305, name: "Đá 1x2 xanh Biên Hòa (Khối)", price: 420000, image: "🪨" },
+
+  // 4. Nhóm Sơn & Chống thấm
+  { id: 401, name: "Sơn Dulux Inspire Nội Thất (Thùng 18L)", price: 1450000, image: "🎨" },
+  { id: 402, name: "Sơn Jotun Jotashield Ngoại Thất (Lon 5L)", price: 650000, image: "🎨" },
+  { id: 403, name: "Sơn Kova Chống Thấm CT-11A (Thùng 20kg)", price: 1950000, image: "💧" },
+  
+  // 5. Điện nước
+  { id: 501, name: "Ống nhựa Bình Minh PVC Ø27 (Cây 4m)", price: 32000, image: "🚿" },
+  { id: 502, name: "Dây điện Cadivi 2.5 (Cuộn 100m)", price: 680000, image: "⚡" },
 ];
 
 export default function PosPage() {
@@ -30,20 +53,18 @@ export default function PosPage() {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      // Gọi API lấy hàng thật
       const data = await api_service.get_products();
       
       if (Array.isArray(data) && data.length > 0) {
-        setProducts(data); // Có hàng thật thì hiện hàng thật
+        setProducts(data); 
         setUseDemoData(false);
       } else {
-        // Nếu không có hàng hoặc lỗi -> Hiện hàng MẪU cho đẹp
         setProducts(DEMO_PRODUCTS);
         setUseDemoData(true);
       }
     } catch (e) {
       console.error(e);
-      setProducts(DEMO_PRODUCTS); // Lỗi cũng hiện hàng mẫu luôn
+      setProducts(DEMO_PRODUCTS); 
       setUseDemoData(true);
     } finally {
       setLoading(false);
@@ -85,7 +106,7 @@ export default function PosPage() {
     p.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Lấy 4 sản phẩm đầu tiên làm "Gợi ý"
+  // Lấy 4 sản phẩm đầu tiên làm gợi ý (Ưu tiên Xi măng)
   const suggestedProducts = products.slice(0, 4);
 
   const handleCheckout = async () => {
@@ -93,7 +114,7 @@ export default function PosPage() {
     setProcessing(true);
 
     if (useDemoData) {
-      alert("Đây là dữ liệu mẫu, không thể thanh toán thật! Vui lòng kết nối Backend.");
+      alert("Đang dùng dữ liệu mẫu (Demo), không thể thanh toán thật! Vui lòng kết nối Backend để tạo đơn.");
       setProcessing(false);
       return;
     }
@@ -133,7 +154,7 @@ export default function PosPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <input 
             type="text"
-            placeholder="Tìm kiếm: Xi măng, gạch, sơn..."
+            placeholder="Tìm kiếm: Holcim, Hà Tiên, thép, sơn..."
             className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -143,12 +164,12 @@ export default function PosPage() {
         {/* 2. Khu vực chính (Cuộn được) */}
         <div className="flex-1 overflow-y-auto space-y-6 pr-2 custom-scrollbar">
           
-          {/* MỤC ĐỀ XUẤT (Chỉ hiện khi không tìm kiếm) */}
+          {/* MỤC ĐỀ XUẤT */}
           {searchTerm === "" && (
             <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
               <h2 className="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2">
                 <Star className="text-yellow-500 fill-yellow-500" size={20} />
-                Sản phẩm đề xuất cho bạn
+                Sản phẩm bán chạy
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {suggestedProducts.map((product) => (
@@ -177,7 +198,7 @@ export default function PosPage() {
           <div>
             <h2 className="text-lg font-bold text-slate-700 mb-3 flex items-center gap-2">
               <Tag size={20} className="text-slate-500" />
-              Tất cả sản phẩm
+              Kho hàng ({filteredProducts.length} sản phẩm)
             </h2>
             
             {loading ? (
@@ -193,10 +214,10 @@ export default function PosPage() {
                     className="cursor-pointer hover:shadow-lg hover:border-blue-500 transition-all group overflow-hidden border-slate-200"
                   >
                     <CardContent className="p-4">
-                      <div className="h-32 bg-slate-100 rounded-lg mb-3 flex items-center justify-center text-4xl group-hover:scale-105 transition-transform duration-300">
+                      <div className="h-32 bg-slate-100 rounded-lg mb-3 flex items-center justify-center text-5xl group-hover:scale-105 transition-transform duration-300 select-none">
                         {product.image || "🏗️"}
                       </div>
-                      <h3 className="font-semibold text-slate-700 line-clamp-2 min-h-[2.5rem] leading-tight mb-2">
+                      <h3 className="font-semibold text-slate-700 line-clamp-2 min-h-[2.5rem] leading-tight mb-2 text-sm">
                         {product.name}
                       </h3>
                       <div className="flex justify-between items-end">
@@ -238,7 +259,7 @@ export default function PosPage() {
           ) : (
             cart.map((item) => (
               <div key={item.id} className="flex gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:border-blue-200 transition-colors group">
-                <div className="h-12 w-12 bg-slate-50 rounded-lg flex items-center justify-center text-lg">
+                <div className="h-12 w-12 bg-slate-50 rounded-lg flex items-center justify-center text-lg select-none">
                   {item.image || "📦"}
                 </div>
                 <div className="flex-1">
