@@ -16,20 +16,22 @@ export default function LoginPage() {
     // Gọi API đăng nhập
     const data = await api_service.login(form.email, form.password);
     
-    // --- ĐOẠN SỬA QUAN TRỌNG ---
-    // Kiểm tra đúng biến 'token'
+    // --- ĐOẠN SỬA QUAN TRỌNG NHẤT ---
     if (data && data.token) {
-      console.log("Đăng nhập thành công! Token:", data.token);
+      console.log("Token nhận được:", data.token);
+      
+      // 1. Lưu token vào bộ nhớ trình duyệt (Dòng này bị thiếu trước đó)
+      localStorage.setItem("token", data.token); 
+      
       alert("Đăng nhập thành công!");
       
-      // Chuyển hướng sang trang Dashboard hoặc Inventory
-      router.push("/dashboard"); 
+      // 2. Chuyển hướng thẳng sang trang POS để test luôn
+      router.push("/pos"); 
     } else {
-      // Hiển thị lỗi từ Backend hoặc lỗi mặc định
       console.error("Lỗi đăng nhập:", data);
       alert(data.error || "Sai tài khoản hoặc mật khẩu!");
     }
-    // ----------------------------
+    // --------------------------------
   };
 
   return (
