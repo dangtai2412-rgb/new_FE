@@ -1,75 +1,40 @@
-// src/lib/api_service.js
-const BASE_URL = "http://localhost:9999";
-
-export const api_service = {
-  // 1. Đăng nhập (Lưu token)
-  login: async (email, password) => {
-    try {
-      const res = await fetch(`${BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      
-      const data = await res.json();
-      
-      // Lưu token vào bộ nhớ máy
-      if (res.ok && data.token) {
-        localStorage.setItem("token", data.token);
-      }
-      
-      return data;
-    } catch (error) {
-      console.error("Lỗi kết nối Login:", error);
-      return { error: "Không thể kết nối đến server" };
-    }
-  },
-
-  // 2. Lấy danh sách sản phẩm (ĐÃ SỬA: Gửi kèm Token)
+// 2. Lấy danh sách sản phẩm (Đã nâng cấp để debug và tránh lỗi crash)
   get_products: async () => {
     try {
-      // Lấy token từ bộ nhớ ra
+      // KIỂM TRA 1: Đảm bảo code chỉ chạy ở trình duyệt (Client-side)
+      if (typeof window === "undefined") {
+        return []; // Nếu chạy trên server (Next.js SSR), trả về rỗng để tránh lỗi localStorage
+      }
+
+      // KIỂM TRA 2: Lấy token
       const token = localStorage.getItem("token");
-      
+
+      // Nếu KHÔNG có token (chưa đăng nhập), thì không gọi API nữa để tránh lỗi 401
+      if (!token) {
+        console.warn("⚠️ Chưa có Token (User chưa đăng nhập).");
+        return []; 
+      }
+
       const res = await fetch(`${BASE_URL}/products/`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}` // Quan trọng nhất: Gửi chìa khóa
+            "Authorization": `Bearer ${token}`
         }
       });
 
-      if (!res.ok) throw new Error("Lỗi lấy dữ liệu sản phẩm");
+      // KIỂM TRA 3: In ra lỗi chi tiết từ Server nếu thất bại
+      if (!res.ok) {
+        // Đọc nội dung lỗi server trả về (nếu có)
+        const errorText = await res.text(); 
+        console.error(`❌ API Lỗi [${res.status}]: ${errorText}`);
+        throw new Error(`Server từ chối: ${res.status} - ${errorText}`);
+      }
+
       return await res.json();
     } catch (error) {
-      console.error("Lỗi get_products:", error);
-      return [];
-    }
-  },
-  
-  // 3. Tạo đơn hàng (ĐÃ SỬA: Bỏ comment dòng Authorization)
-  create_order: async (order_data) => {
-    const token = localStorage.getItem("token");
-    
-    const res = await fetch(`${BASE_URL}/orders/`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}` // Đã bật lại dòng này
-      },
-      body: JSON.stringify(order_data),
-    });
-    return res.json();
-  },
-
-  // 4. Lấy danh mục
-  get_categories: async () => {
-    try {
-      const res = await fetch(`${BASE_URL}/api/categories`); 
-      return res.json();
-    } catch (error) {
-      console.error(error);
+      console.error("🔥 Lỗi get_products:", error.message);
+      // Trả về mảng rỗng để trang web không bị sập (trắng trang)
       return [];
     }
   }
-};
