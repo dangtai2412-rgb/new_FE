@@ -2,79 +2,105 @@
 
 import React, { useState, useEffect } from "react";
 import { api_service } from "@/lib/api_service";
-import { Search, Trash2, ShoppingCart, Plus, Minus, Loader2, Star, Tag, Users, Filter, PackageOpen } from "lucide-react";
+import { Search, Trash2, ShoppingCart, Plus, Minus, Loader2, Star, Tag, Users, Filter, PackageOpen, LayoutGrid, Hammer, Droplets, Zap, Bath, Layers, Key } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
-// --- 1. DỮ LIỆU KHÁCH HÀNG MẪU (Giữ nguyên) ---
+// --- 1. DANH SÁCH KHÁCH HÀNG (Mở rộng thêm) ---
 const DEMO_CUSTOMERS = [
-  { id: 0, name: "Khách lẻ (Không lưu)", phone: "" },
-  { id: 1, name: "Anh Hùng (Thầu xây dựng)", phone: "0909123456", debt: 15500000 },
-  { id: 2, name: "Cty XD Kiến Vàng", phone: "0918888999", debt: 82000000 },
-  { id: 3, name: "Cô Ba (Chủ nhà trọ)", phone: "0987654321", debt: 0 },
-  { id: 4, name: "Chú Tư (Sửa nhà)", phone: "0912345678", debt: 2500000 },
+  { id: 0, name: "Khách lẻ (Vãng lai)", phone: "", type: "guest" },
+  { id: 1, name: "Anh Hùng (Thầu Xây Dựng)", phone: "0909123456", debt: 15500000, type: "vip" },
+  { id: 2, name: "Cty XD Kiến Vàng", phone: "0918888999", debt: 82000000, type: "company" },
+  { id: 3, name: "Cô Ba (Chủ trọ KDC 5)", phone: "0987654321", debt: 0, type: "regular" },
+  { id: 4, name: "Chú Tư (Thợ điện nước)", phone: "0912345678", debt: 2500000, type: "regular" },
+  { id: 5, name: "Anh Tâm (KTS Nội thất)", phone: "0933444555", debt: 0, type: "vip" },
 ];
 
-// --- 2. DỮ LIỆU SẢN PHẨM SIÊU ĐA DẠNG ---
+// --- 2. KHO HÀNG KHỔNG LỒ (Đa dạng mẫu mã, giá cả) ---
 const DEMO_PRODUCTS = [
-  // === NHÓM 1: SƠN & HÓA CHẤT (Rất quan trọng) ===
+  // === NHÓM 1: SƠN & HÓA CHẤT (Pain & Chemicals) ===
   { id: 101, name: "Sơn Dulux Weathershield Ngoại Thất (15L)", price: 2850000, category: "paint", origin: "🇳🇱 Hà Lan", image: "🎨" },
   { id: 102, name: "Sơn Dulux EasyClean Lau Chùi (15L)", price: 1650000, category: "paint", origin: "🇳🇱 Hà Lan", image: "🎨" },
   { id: 103, name: "Sơn Jotun Jotashield Bền Màu (15L)", price: 2600000, category: "paint", origin: "🇳🇴 Na Uy", image: "🎨" },
   { id: 104, name: "Sơn Jotun Essence Dễ Lau Chùi (17L)", price: 1450000, category: "paint", origin: "🇳🇴 Na Uy", image: "🎨" },
-  { id: 105, name: "Chống thấm KOVA CT-11A Gold (20kg)", price: 1950000, category: "paint", origin: "🇻🇳 Việt Mỹ", image: "💧" },
+  { id: 105, name: "Sơn Kova Chống thấm CT-11A Gold (20kg)", price: 1950000, category: "paint", origin: "🇻🇳 Việt Mỹ", image: "💧" },
   { id: 106, name: "Sơn lót kháng kiềm Nippon Odour-less (18L)", price: 1850000, category: "paint", origin: "🇯🇵 Nhật Bản", image: "⚪" },
-  { id: 107, name: "Bột trét tường Dulux (Bao 40kg)", price: 380000, category: "paint", origin: "🇳🇱 Hà Lan", image: "🌫️" },
-  { id: 108, name: "Sơn xịt ATM (Đủ màu) - Thùng 12 chai", price: 300000, category: "paint", origin: "🇹🇭 Thái Lan", image: "🖍️" },
-  { id: 109, name: "Dung môi pha sơn Xăng thơm (Lít)", price: 25000, category: "paint", origin: "🇻🇳 Việt Nam", image: "🛢️" },
+  { id: 107, name: "Sơn Maxilite Kinh Tế Nội Thất (18L)", price: 850000, category: "paint", origin: "🇬🇧 Anh", image: "🎨" },
+  { id: 108, name: "Bột trét tường Dulux (Bao 40kg)", price: 380000, category: "paint", origin: "🇳🇱 Hà Lan", image: "🌫️" },
+  { id: 109, name: "Bột trét Việt Mỹ (Bao 40kg)", price: 120000, category: "paint", origin: "🇻🇳 Việt Nam", image: "🌫️" },
+  { id: 110, name: "Dung môi pha sơn Xăng thơm (Lít)", price: 25000, category: "paint", origin: "🇻🇳 Việt Nam", image: "🛢️" },
+  { id: 111, name: "Cọ lăn sơn Việt Mỹ (Cây)", price: 15000, category: "paint", origin: "🇻🇳 Việt Nam", image: "🖌️" },
 
-  // === NHÓM 2: THIẾT BỊ VỆ SINH & GIA DỤNG (Mới thêm) ===
-  { id: 201, name: "Bồn cầu 1 khối Inax AC-909VRN", price: 3800000, category: "household", origin: "🇯🇵 Nhật Bản", image: "🚽" },
-  { id: 202, name: "Bồn cầu thông minh Toto Washlet", price: 12500000, category: "household", origin: "🇯🇵 Nhật Bản", image: "🚽" },
-  { id: 203, name: "Chậu rửa mặt Lavabo Caesar Treo Tường", price: 650000, category: "household", origin: "🇹🇼 Đài Loan", image: "🛁" },
-  { id: 204, name: "Vòi sen tắm nóng lạnh Viglacera", price: 1200000, category: "household", origin: "🇻🇳 Việt Nam", image: "🚿" },
-  { id: 205, name: "Bộ gương phòng tắm tráng bạc Bỉ (60x80)", price: 450000, category: "household", origin: "🇧🇪 Bỉ", image: "🪞" },
-  { id: 206, name: "Chậu rửa bát Inox 304 Sơn Hà (2 hố)", price: 1850000, category: "household", origin: "🇻🇳 Việt Nam", image: "🍽️" },
-  { id: 207, name: "Khóa cửa tay gạt Việt Tiệp 04991", price: 350000, category: "household", origin: "🇻🇳 Việt Nam", image: "🔒" },
-  { id: 208, name: "Khóa cửa đại sảnh Huy Hoàng (Mạ vàng)", price: 2100000, category: "household", origin: "🇻🇳 Việt Nam", image: "🔐" },
-  { id: 209, name: "Thang nhôm rút chữ A Nikawa (2.5m)", price: 1650000, category: "household", origin: "🇯🇵 Nhật Bản", image: "🪜" },
+  // === NHÓM 2: THIẾT BỊ VỆ SINH (Sanitary Ware) ===
+  { id: 201, name: "Bồn cầu 1 khối Inax AC-909VRN", price: 3800000, category: "sanitary", origin: "🇯🇵 Nhật Bản", image: "🚽" },
+  { id: 202, name: "Bồn cầu thông minh Toto Washlet", price: 12500000, category: "sanitary", origin: "🇯🇵 Nhật Bản", image: "🚽" },
+  { id: 203, name: "Bồn cầu Viglacera V35 (Giá rẻ)", price: 1450000, category: "sanitary", origin: "🇻🇳 Việt Nam", image: "🚽" },
+  { id: 204, name: "Chậu Lavabo Caesar Treo Tường", price: 650000, category: "sanitary", origin: "🇹🇼 Đài Loan", image: "🛁" },
+  { id: 205, name: "Sen cây tắm đứng Inax BFV-3415T", price: 3200000, category: "sanitary", origin: "🇯🇵 Nhật Bản", image: "🚿" },
+  { id: 206, name: "Vòi sen tắm nóng lạnh Viglacera", price: 1200000, category: "sanitary", origin: "🇻🇳 Việt Nam", image: "🚿" },
+  { id: 207, name: "Gương phòng tắm Bỉ Navado (60x80)", price: 450000, category: "sanitary", origin: "🇧🇪 Bỉ", image: "🪞" },
+  { id: 208, name: "Bình nóng lạnh Ariston 30L Slim", price: 2850000, category: "sanitary", origin: "🇮🇹 Ý", image: "🔥" },
+  { id: 209, name: "Bình nóng lạnh Ferroli 20L", price: 2100000, category: "sanitary", origin: "🇮🇹 Ý", image: "🔥" },
 
-  // === NHÓM 3: ĐIỆN & NƯỚC (Đa dạng hơn) ===
-  { id: 301, name: "Dây điện Cadivi 2.5mm (Cuộn 100m)", price: 680000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "⚡" },
-  { id: 302, name: "Dây cáp điện trần Phú Thịnh 4.0", price: 950000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "⚡" },
-  { id: 303, name: "Bóng đèn LED Búp Rạng Đông 30W", price: 85000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "💡" },
-  { id: 304, name: "Đèn tuýp LED Philips 1.2m (Bộ)", price: 120000, category: "diennuoc", origin: "🇳🇱 Hà Lan", image: "💡" },
-  { id: 305, name: "Ống nước Bình Minh PVC Ø90 (Cây 4m)", price: 145000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "🕳️" },
-  { id: 306, name: "Ống nhiệt PPR Tiền Phong Ø25 (Cây)", price: 42000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "🔴" },
-  { id: 307, name: "Máy bơm nước Panasonic 200W", price: 1450000, category: "diennuoc", origin: "🇯🇵 Nhật Bản", image: "⚙️" },
+  // === NHÓM 3: ĐIỆN & CHIẾU SÁNG (Electrical) ===
+  { id: 301, name: "Dây điện Cadivi 2.5mm (Cuộn 100m)", price: 680000, category: "electric", origin: "🇻🇳 Việt Nam", image: "⚡" },
+  { id: 302, name: "Dây cáp điện trần Phú Thịnh 4.0", price: 950000, category: "electric", origin: "🇻🇳 Việt Nam", image: "⚡" },
+  { id: 303, name: "Công tắc Panasonic Wide (Hạt)", price: 15000, category: "electric", origin: "🇯🇵 Nhật Bản", image: "🔌" },
+  { id: 304, name: "Ổ cắm đôi 3 chấu Schneider Zencelo", price: 120000, category: "electric", origin: "🇫🇷 Pháp", image: "🔌" },
+  { id: 305, name: "Bóng đèn LED Bulb Rạng Đông 30W", price: 85000, category: "electric", origin: "🇻🇳 Việt Nam", image: "💡" },
+  { id: 306, name: "Đèn tuýp LED Philips 1.2m (Bộ)", price: 120000, category: "electric", origin: "🇳🇱 Hà Lan", image: "💡" },
+  { id: 307, name: "Đèn âm trần Downlight Panasonic 9W", price: 110000, category: "electric", origin: "🇯🇵 Nhật Bản", image: "🔆" },
+  { id: 308, name: "Aptomat chống giật Panasonic 32A", price: 450000, category: "electric", origin: "🇯🇵 Nhật Bản", image: "🛡️" },
+  { id: 309, name: "Quạt trần Panasonic 4 cánh", price: 2100000, category: "electric", origin: "🇯🇵 Nhật Bản", image: "🌬️" },
 
-  // === NHÓM 4: XÂY DỰNG THÔ (Cơ bản) ===
-  { id: 401, name: "Xi măng Hà Tiên 1 (Bao 50kg)", price: 86000, category: "thô", origin: "🇻🇳 Việt Nam", image: "🏗️" },
-  { id: 402, name: "Xi măng Holcim Đa Dụng (Bao 50kg)", price: 89000, category: "thô", origin: "🇨🇭 Thụy Sĩ", image: "🏗️" },
-  { id: 403, name: "Thép vằn Hòa Phát D10 (Cây 11.7m)", price: 115000, category: "thô", origin: "🇻🇳 Việt Nam", image: "⛓️" },
-  { id: 404, name: "Thép Pomina cuộn Ø6 (Kg)", price: 18500, category: "thô", origin: "🇻🇳 Việt Nam", image: "⛓️" },
-  { id: 405, name: "Gạch ống 4 lỗ Tuynel Đồng Nai (Viên)", price: 1300, category: "thô", origin: "🇻🇳 Việt Nam", image: "🧱" },
-  { id: 406, name: "Cát vàng bê tông rửa sạch (Khối)", price: 480000, category: "thô", origin: "🇻🇳 Việt Nam", image: "⏳" },
+  // === NHÓM 4: XÂY DỰNG THÔ (Structural) ===
+  { id: 401, name: "Xi măng Hà Tiên 1 (Bao 50kg)", price: 86000, category: "raw", origin: "🇻🇳 Việt Nam", image: "🏗️" },
+  { id: 402, name: "Xi măng Holcim Đa Dụng (Bao 50kg)", price: 89000, category: "raw", origin: "🇨🇭 Thụy Sĩ", image: "🏗️" },
+  { id: 403, name: "Xi măng Trắng SCG Thái Lan", price: 180000, category: "raw", origin: "🇹🇭 Thái Lan", image: "🏗️" },
+  { id: 404, name: "Thép vằn Hòa Phát D10 (Cây 11.7m)", price: 115000, category: "raw", origin: "🇻🇳 Việt Nam", image: "⛓️" },
+  { id: 405, name: "Thép Pomina cuộn Ø6 (Kg)", price: 18500, category: "raw", origin: "🇻🇳 Việt Nam", image: "⛓️" },
+  { id: 406, name: "Gạch ống 4 lỗ Tuynel Đồng Nai (Viên)", price: 1300, category: "raw", origin: "🇻🇳 Việt Nam", image: "🧱" },
+  { id: 407, name: "Gạch Block không nung (Viên)", price: 1500, category: "raw", origin: "🇻🇳 Việt Nam", image: "🧱" },
+  { id: 408, name: "Cát vàng bê tông rửa sạch (m³)", price: 480000, category: "raw", origin: "🇻🇳 Việt Nam", image: "⏳" },
+  { id: 409, name: "Đá 1x2 Xanh Biên Hòa (m³)", price: 420000, category: "raw", origin: "🇻🇳 Việt Nam", image: "🪨" },
 
-  // === NHÓM 5: GẠCH ỐP LÁT & SÀN ===
-  { id: 501, name: "Gạch lát nền Đồng Tâm 60x60 (m²)", price: 185000, category: "hoanthien", origin: "🇻🇳 Việt Nam", image: "⬜" },
-  { id: 502, name: "Gạch bóng kính Ấn Độ 80x80 (m²)", price: 320000, category: "hoanthien", origin: "🇮🇳 Ấn Độ", image: "✨" },
-  { id: 503, name: "Sàn gỗ công nghiệp Malaysia 12mm (m²)", price: 350000, category: "hoanthien", origin: "🇲🇾 Malaysia", image: "🪵" },
-  { id: 504, name: "Keo dán gạch Weber (Bao 25kg)", price: 350000, category: "hoanthien", origin: "🇫🇷 Pháp", image: "🧪" },
+  // === NHÓM 5: GẠCH ỐP LÁT & SÀN (Flooring) ===
+  { id: 501, name: "Gạch lát nền Đồng Tâm 60x60 (m²)", price: 185000, category: "flooring", origin: "🇻🇳 Việt Nam", image: "⬜" },
+  { id: 502, name: "Gạch bóng kính Ấn Độ 80x80 (m²)", price: 320000, category: "flooring", origin: "🇮🇳 Ấn Độ", image: "✨" },
+  { id: 503, name: "Gạch giả gỗ Prime 15x80 (m²)", price: 210000, category: "flooring", origin: "🇻🇳 Việt Nam", image: "🪵" },
+  { id: 504, name: "Sàn gỗ công nghiệp Malaysia 12mm (m²)", price: 350000, category: "flooring", origin: "🇲🇾 Malaysia", image: "🪵" },
+  { id: 505, name: "Sàn nhựa hèm khóa Hàn Quốc (m²)", price: 280000, category: "flooring", origin: "🇰🇷 Hàn Quốc", image: "🧱" },
+  { id: 506, name: "Keo dán gạch Weber.tai Fix (Bao 25kg)", price: 350000, category: "flooring", origin: "🇫🇷 Pháp", image: "🧪" },
+  { id: 507, name: "Keo chà ron cá sấu Thái Lan (Kg)", price: 15000, category: "flooring", origin: "🇹🇭 Thái Lan", image: "🐊" },
 
-  // === NHÓM 6: DỤNG CỤ CẦM TAY ===
-  { id: 601, name: "Máy khoan bê tông Bosch GSB 550", price: 1250000, category: "dungcu", origin: "🇩🇪 Đức", image: "🛠️" },
-  { id: 602, name: "Máy mài góc Makita 9553NB", price: 950000, category: "dungcu", origin: "🇯🇵 Nhật Bản", image: "⚙️" },
-  { id: 603, name: "Bộ cờ lê đa năng Stanley (12 món)", price: 450000, category: "dungcu", origin: "🇺🇸 Mỹ", image: "🔧" },
+  // === NHÓM 6: KIM KHÍ & DỤNG CỤ (Tools & Hardware) ===
+  { id: 601, name: "Máy khoan bê tông Bosch GSB 550", price: 1250000, category: "tools", origin: "🇩🇪 Đức", image: "🛠️" },
+  { id: 602, name: "Máy mài góc Makita 9553NB", price: 950000, category: "tools", origin: "🇯🇵 Nhật Bản", image: "⚙️" },
+  { id: 603, name: "Máy bắn vít pin Dewalt 18V", price: 3200000, category: "tools", origin: "🇺🇸 Mỹ", image: "🔫" },
+  { id: 604, name: "Bộ cờ lê đa năng Stanley (12 món)", price: 450000, category: "tools", origin: "🇺🇸 Mỹ", image: "🔧" },
+  { id: 605, name: "Thước cuộn Tajima 5m (Xịn)", price: 180000, category: "tools", origin: "🇯🇵 Nhật Bản", image: "📏" },
+  { id: 606, name: "Khóa cửa tay gạt Việt Tiệp 04991", price: 350000, category: "tools", origin: "🇻🇳 Việt Nam", image: "🔒" },
+  { id: 607, name: "Khóa điện tử vân tay Hafele", price: 5500000, category: "tools", origin: "🇩🇪 Đức", image: "🔐" },
+  { id: 608, name: "Bản lề inox 304 Ivan (Cặp)", price: 45000, category: "tools", origin: "🇹🇼 Đài Loan", image: "🚪" },
+  { id: 609, name: "Thang nhôm rút chữ A Nikawa (2.5m)", price: 1650000, category: "tools", origin: "🇯🇵 Nhật Bản", image: "🪜" },
+
+  // === NHÓM 7: ĐIỆN NƯỚC (Plumbing) ===
+  { id: 701, name: "Ống nước Bình Minh PVC Ø90 (Cây 4m)", price: 145000, category: "plumbing", origin: "🇻🇳 Việt Nam", image: "🕳️" },
+  { id: 702, name: "Ống nhiệt PPR Tiền Phong Ø25 (Cây)", price: 42000, category: "plumbing", origin: "🇻🇳 Việt Nam", image: "🔴" },
+  { id: 703, name: "Co góc 90 độ PVC Bình Minh Ø27", price: 3000, category: "plumbing", origin: "🇻🇳 Việt Nam", image: "↩️" },
+  { id: 704, name: "Máy bơm nước Panasonic 200W", price: 1450000, category: "plumbing", origin: "🇯🇵 Nhật Bản", image: "⚙️" },
+  { id: 705, name: "Bồn nước Inox Sơn Hà 1000L", price: 3200000, category: "plumbing", origin: "🇻🇳 Việt Nam", image: "🛢️" },
+  { id: 706, name: "Chậu rửa bát Inox 304 2 hố (Hàn Quốc)", price: 1850000, category: "plumbing", origin: "🇰🇷 Hàn Quốc", image: "🍽️" },
 ];
 
 const CATEGORIES = [
-  { id: "all", name: "Tất cả", icon: "🏢" },
-  { id: "paint", name: "Sơn & Hóa chất", icon: "🎨" }, // Nổi bật mục Sơn
-  { id: "household", name: "TB Vệ sinh & Gia dụng", icon: "🚿" }, // Mục mới
-  { id: "diennuoc", name: "Điện - Nước", icon: "⚡" },
-  { id: "hoanthien", name: "Gạch & Sàn", icon: "🧱" },
-  { id: "thô", name: "Xây dựng thô", icon: "🏗️" },
-  { id: "dungcu", name: "Máy & Dụng cụ", icon: "🛠️" },
+  { id: "all", name: "Tất cả", icon: LayoutGrid },
+  { id: "raw", name: "Xây dựng thô", icon: Hammer },
+  { id: "paint", name: "Sơn & Hóa chất", icon: Droplets },
+  { id: "sanitary", name: "TB Vệ sinh", icon: Bath },
+  { id: "electric", name: "Điện & Đèn", icon: Zap },
+  { id: "plumbing", name: "Nước & Bếp", icon: Layers },
+  { id: "flooring", name: "Gạch & Sàn", icon: Layers },
+  { id: "tools", name: "Kim khí & Tool", icon: Key },
 ];
 
 export default function PosPage() {
@@ -156,14 +182,13 @@ export default function PosPage() {
     if (useDemoData) {
       setTimeout(() => {
         const customer = DEMO_CUSTOMERS.find(c => c.id == selectedCustomer);
-        alert(`✅ ĐÃ TẠO ĐƠN HÀNG THÀNH CÔNG!\n\n👤 Khách hàng: ${customer?.name}\n💰 Tổng thanh toán: ${totalAmount.toLocaleString()}đ\n📦 Số lượng: ${cart.reduce((a, b) => a + b.quantity, 0)} sản phẩm`);
+        alert(`✅ TẠO ĐƠN HÀNG THÀNH CÔNG!\n\n👤 Khách hàng: ${customer?.name}\n💰 Tổng tiền: ${totalAmount.toLocaleString()}đ\n📦 Số lượng: ${cart.reduce((a, b) => a + b.quantity, 0)} sản phẩm`);
         setCart([]);
         setProcessing(false);
       }, 800); 
       return;
     }
 
-    // Logic gọi API thật (nếu có backend)
     const orderData = {
       order_details: cart.map(item => ({
         product_id: item.id,
@@ -219,7 +244,7 @@ export default function PosPage() {
                     ? "bg-blue-600 text-white border-blue-600 shadow-md" 
                     : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-blue-600"}`}
               >
-                <span>{cat.icon}</span>
+                <cat.icon size={16} />
                 {cat.name}
               </button>
             ))}
@@ -239,7 +264,7 @@ export default function PosPage() {
                 <div className="flex flex-col items-center justify-center h-64 text-slate-400">
                   <PackageOpen size={64} className="mb-4 opacity-50" />
                   <p className="text-lg">Không tìm thấy sản phẩm nào</p>
-                  <p className="text-sm">Thử tìm từ khóa khác xem sao!</p>
+                  <p className="text-sm">Thử tìm "Sơn" hoặc "Thép" xem sao!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pb-20">
