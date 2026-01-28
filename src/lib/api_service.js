@@ -15,7 +15,7 @@ export const api_service = {
       
       // Lưu token vào bộ nhớ máy
       if (res.ok && data.token) {
-        localStorage.setItem("token", data.token); 
+        localStorage.setItem("token", data.token);
       }
       
       return data;

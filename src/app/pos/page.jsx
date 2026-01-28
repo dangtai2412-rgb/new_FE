@@ -2,56 +2,78 @@
 
 import React, { useState, useEffect } from "react";
 import { api_service } from "@/lib/api_service";
-import { Search, Trash2, ShoppingCart, Plus, Minus, Loader2, Star, Tag, Users, Filter } from "lucide-react";
+import { Search, Trash2, ShoppingCart, Plus, Minus, Loader2, Star, Tag, Users, Filter, PackageOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
-// --- 1. DỮ LIỆU KHÁCH HÀNG MẪU ---
+// --- 1. DỮ LIỆU KHÁCH HÀNG MẪU (Giữ nguyên) ---
 const DEMO_CUSTOMERS = [
   { id: 0, name: "Khách lẻ (Không lưu)", phone: "" },
-  { id: 1, name: "Nguyễn Văn A (Thầu xây dựng)", phone: "0909123456", debt: 5000000 },
-  { id: 2, name: "Công ty XD Hưng Thịnh", phone: "0918888999", debt: 12500000 },
-  { id: 3, name: "Chị Lan (Chủ nhà KDC 5)", phone: "0987654321", debt: 0 },
+  { id: 1, name: "Anh Hùng (Thầu xây dựng)", phone: "0909123456", debt: 15500000 },
+  { id: 2, name: "Cty XD Kiến Vàng", phone: "0918888999", debt: 82000000 },
+  { id: 3, name: "Cô Ba (Chủ nhà trọ)", phone: "0987654321", debt: 0 },
+  { id: 4, name: "Chú Tư (Sửa nhà)", phone: "0912345678", debt: 2500000 },
 ];
 
-// --- 2. DỮ LIỆU SẢN PHẨM PHONG PHÚ TOÀN CẦU ---
+// --- 2. DỮ LIỆU SẢN PHẨM SIÊU ĐA DẠNG ---
 const DEMO_PRODUCTS = [
-  // --- A. XÂY DỰNG THÔ (Thép, Xi măng, Gạch) ---
-  { id: 101, name: "Xi măng Holcim Đa Dụng (Thụy Sĩ)", price: 89000, category: "thô", origin: "🇨🇭 Thụy Sĩ", image: "🏗️" },
-  { id: 102, name: "Xi măng Lafarge Power (Pháp)", price: 92000, category: "thô", origin: "🇫🇷 Pháp", image: "🏗️" },
-  { id: 103, name: "Thép thanh vằn Nippon Steel D10 (Nhật Bản)", price: 125000, category: "thô", origin: "🇯🇵 Nhật Bản", image: "⛓️" },
-  { id: 104, name: "Thép cuộn POSCO (Hàn Quốc)", price: 18500, category: "thô", origin: "🇰🇷 Hàn Quốc", image: "⛓️" },
-  { id: 105, name: "Gạch đỏ Tuynel Bình Dương (Viên)", price: 1200, category: "thô", origin: "🇻🇳 Việt Nam", image: "🧱" },
-  { id: 106, name: "Bê tông khí chưng áp AAC (Viên)", price: 15000, category: "thô", origin: "🇦🇺 Úc", image: "🧱" },
-  { id: 107, name: "Cát vàng bê tông hạt lớn (m³)", price: 450000, category: "thô", origin: "🇻🇳 Việt Nam", image: "⏳" },
+  // === NHÓM 1: SƠN & HÓA CHẤT (Rất quan trọng) ===
+  { id: 101, name: "Sơn Dulux Weathershield Ngoại Thất (15L)", price: 2850000, category: "paint", origin: "🇳🇱 Hà Lan", image: "🎨" },
+  { id: 102, name: "Sơn Dulux EasyClean Lau Chùi (15L)", price: 1650000, category: "paint", origin: "🇳🇱 Hà Lan", image: "🎨" },
+  { id: 103, name: "Sơn Jotun Jotashield Bền Màu (15L)", price: 2600000, category: "paint", origin: "🇳🇴 Na Uy", image: "🎨" },
+  { id: 104, name: "Sơn Jotun Essence Dễ Lau Chùi (17L)", price: 1450000, category: "paint", origin: "🇳🇴 Na Uy", image: "🎨" },
+  { id: 105, name: "Chống thấm KOVA CT-11A Gold (20kg)", price: 1950000, category: "paint", origin: "🇻🇳 Việt Mỹ", image: "💧" },
+  { id: 106, name: "Sơn lót kháng kiềm Nippon Odour-less (18L)", price: 1850000, category: "paint", origin: "🇯🇵 Nhật Bản", image: "⚪" },
+  { id: 107, name: "Bột trét tường Dulux (Bao 40kg)", price: 380000, category: "paint", origin: "🇳🇱 Hà Lan", image: "🌫️" },
+  { id: 108, name: "Sơn xịt ATM (Đủ màu) - Thùng 12 chai", price: 300000, category: "paint", origin: "🇹🇭 Thái Lan", image: "🖍️" },
+  { id: 109, name: "Dung môi pha sơn Xăng thơm (Lít)", price: 25000, category: "paint", origin: "🇻🇳 Việt Nam", image: "🛢️" },
 
-  // --- B. HOÀN THIỆN (Sơn, Gạch men, Keo) ---
-  { id: 201, name: "Sơn Dulux Ambiance 5in1 (18L)", price: 2150000, category: "hoanthien", origin: "🇳🇱 Hà Lan", image: "🎨" },
-  { id: 202, name: "Sơn Jotun Jotashield Bền Màu (15L)", price: 1850000, category: "hoanthien", origin: "🇳🇴 Na Uy", image: "🎨" },
-  { id: 203, name: "Gạch lát nền Eurotile 60x60 (m²)", price: 320000, category: "hoanthien", origin: "🇮🇹 Ý", image: "⬜" },
-  { id: 204, name: "Gạch men Tây Ban Nha Porcelanosa (m²)", price: 850000, category: "hoanthien", origin: "🇪🇸 TBN", image: "⬜" },
-  { id: 205, name: "Keo dán gạch Weber.tai Fix (Bao 25kg)", price: 350000, category: "hoanthien", origin: "🇫🇷 Pháp", image: "🧪" },
-  { id: 206, name: "Sàn gỗ công nghiệp KronoSwiss (m²)", price: 450000, category: "hoanthien", origin: "🇨🇭 Thụy Sĩ", image: "🪵" },
+  // === NHÓM 2: THIẾT BỊ VỆ SINH & GIA DỤNG (Mới thêm) ===
+  { id: 201, name: "Bồn cầu 1 khối Inax AC-909VRN", price: 3800000, category: "household", origin: "🇯🇵 Nhật Bản", image: "🚽" },
+  { id: 202, name: "Bồn cầu thông minh Toto Washlet", price: 12500000, category: "household", origin: "🇯🇵 Nhật Bản", image: "🚽" },
+  { id: 203, name: "Chậu rửa mặt Lavabo Caesar Treo Tường", price: 650000, category: "household", origin: "🇹🇼 Đài Loan", image: "🛁" },
+  { id: 204, name: "Vòi sen tắm nóng lạnh Viglacera", price: 1200000, category: "household", origin: "🇻🇳 Việt Nam", image: "🚿" },
+  { id: 205, name: "Bộ gương phòng tắm tráng bạc Bỉ (60x80)", price: 450000, category: "household", origin: "🇧🇪 Bỉ", image: "🪞" },
+  { id: 206, name: "Chậu rửa bát Inox 304 Sơn Hà (2 hố)", price: 1850000, category: "household", origin: "🇻🇳 Việt Nam", image: "🍽️" },
+  { id: 207, name: "Khóa cửa tay gạt Việt Tiệp 04991", price: 350000, category: "household", origin: "🇻🇳 Việt Nam", image: "🔒" },
+  { id: 208, name: "Khóa cửa đại sảnh Huy Hoàng (Mạ vàng)", price: 2100000, category: "household", origin: "🇻🇳 Việt Nam", image: "🔐" },
+  { id: 209, name: "Thang nhôm rút chữ A Nikawa (2.5m)", price: 1650000, category: "household", origin: "🇯🇵 Nhật Bản", image: "🪜" },
 
-  // --- C. ĐIỆN & NƯỚC (Thiết bị, Ống) ---
+  // === NHÓM 3: ĐIỆN & NƯỚC (Đa dạng hơn) ===
   { id: 301, name: "Dây điện Cadivi 2.5mm (Cuộn 100m)", price: 680000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "⚡" },
-  { id: 302, name: "CB Chống giật Panasonic 32A", price: 125000, category: "diennuoc", origin: "🇯🇵 Nhật Bản", image: "🔌" },
-  { id: 303, name: "Công tắc thông minh Schneider (Bộ)", price: 450000, category: "diennuoc", origin: "🇫🇷 Pháp", image: "💡" },
-  { id: 304, name: "Ống nước PPR Tiền Phong Ø25 (Cây)", price: 42000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "🚿" },
-  { id: 305, name: "Máy bơm nước Panasonic 200W", price: 1450000, category: "diennuoc", origin: "🇯🇵 Nhật Bản", image: "💧" },
+  { id: 302, name: "Dây cáp điện trần Phú Thịnh 4.0", price: 950000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "⚡" },
+  { id: 303, name: "Bóng đèn LED Búp Rạng Đông 30W", price: 85000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "💡" },
+  { id: 304, name: "Đèn tuýp LED Philips 1.2m (Bộ)", price: 120000, category: "diennuoc", origin: "🇳🇱 Hà Lan", image: "💡" },
+  { id: 305, name: "Ống nước Bình Minh PVC Ø90 (Cây 4m)", price: 145000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "🕳️" },
+  { id: 306, name: "Ống nhiệt PPR Tiền Phong Ø25 (Cây)", price: 42000, category: "diennuoc", origin: "🇻🇳 Việt Nam", image: "🔴" },
+  { id: 307, name: "Máy bơm nước Panasonic 200W", price: 1450000, category: "diennuoc", origin: "🇯🇵 Nhật Bản", image: "⚙️" },
 
-  // --- D. DỤNG CỤ & MÁY MÓC (Tools) ---
-  { id: 401, name: "Máy khoan bê tông Bosch GSB 550", price: 1250000, category: "dungcu", origin: "🇩🇪 Đức", image: "🛠️" },
-  { id: 402, name: "Máy mài góc Makita 9553NB", price: 950000, category: "dungcu", origin: "🇯🇵 Nhật Bản", image: "⚙️" },
-  { id: 403, name: "Máy bắn vít Dewalt 18V Brushless", price: 3200000, category: "dungcu", origin: "🇺🇸 Mỹ", image: "🔫" },
-  { id: 404, name: "Thước cuộn Tajima 5m (Xịn)", price: 180000, category: "dungcu", origin: "🇯🇵 Nhật Bản", image: "📏" },
-  { id: 405, name: "Bay xây gạch Stanley (Cái)", price: 45000, category: "dungcu", origin: "🇺🇸 Mỹ", image: "🥄" },
+  // === NHÓM 4: XÂY DỰNG THÔ (Cơ bản) ===
+  { id: 401, name: "Xi măng Hà Tiên 1 (Bao 50kg)", price: 86000, category: "thô", origin: "🇻🇳 Việt Nam", image: "🏗️" },
+  { id: 402, name: "Xi măng Holcim Đa Dụng (Bao 50kg)", price: 89000, category: "thô", origin: "🇨🇭 Thụy Sĩ", image: "🏗️" },
+  { id: 403, name: "Thép vằn Hòa Phát D10 (Cây 11.7m)", price: 115000, category: "thô", origin: "🇻🇳 Việt Nam", image: "⛓️" },
+  { id: 404, name: "Thép Pomina cuộn Ø6 (Kg)", price: 18500, category: "thô", origin: "🇻🇳 Việt Nam", image: "⛓️" },
+  { id: 405, name: "Gạch ống 4 lỗ Tuynel Đồng Nai (Viên)", price: 1300, category: "thô", origin: "🇻🇳 Việt Nam", image: "🧱" },
+  { id: 406, name: "Cát vàng bê tông rửa sạch (Khối)", price: 480000, category: "thô", origin: "🇻🇳 Việt Nam", image: "⏳" },
+
+  // === NHÓM 5: GẠCH ỐP LÁT & SÀN ===
+  { id: 501, name: "Gạch lát nền Đồng Tâm 60x60 (m²)", price: 185000, category: "hoanthien", origin: "🇻🇳 Việt Nam", image: "⬜" },
+  { id: 502, name: "Gạch bóng kính Ấn Độ 80x80 (m²)", price: 320000, category: "hoanthien", origin: "🇮🇳 Ấn Độ", image: "✨" },
+  { id: 503, name: "Sàn gỗ công nghiệp Malaysia 12mm (m²)", price: 350000, category: "hoanthien", origin: "🇲🇾 Malaysia", image: "🪵" },
+  { id: 504, name: "Keo dán gạch Weber (Bao 25kg)", price: 350000, category: "hoanthien", origin: "🇫🇷 Pháp", image: "🧪" },
+
+  // === NHÓM 6: DỤNG CỤ CẦM TAY ===
+  { id: 601, name: "Máy khoan bê tông Bosch GSB 550", price: 1250000, category: "dungcu", origin: "🇩🇪 Đức", image: "🛠️" },
+  { id: 602, name: "Máy mài góc Makita 9553NB", price: 950000, category: "dungcu", origin: "🇯🇵 Nhật Bản", image: "⚙️" },
+  { id: 603, name: "Bộ cờ lê đa năng Stanley (12 món)", price: 450000, category: "dungcu", origin: "🇺🇸 Mỹ", image: "🔧" },
 ];
 
 const CATEGORIES = [
   { id: "all", name: "Tất cả", icon: "🏢" },
-  { id: "thô", name: "Xây dựng thô", icon: "🏗️" },
-  { id: "hoanthien", name: "Hoàn thiện", icon: "🎨" },
+  { id: "paint", name: "Sơn & Hóa chất", icon: "🎨" }, // Nổi bật mục Sơn
+  { id: "household", name: "TB Vệ sinh & Gia dụng", icon: "🚿" }, // Mục mới
   { id: "diennuoc", name: "Điện - Nước", icon: "⚡" },
+  { id: "hoanthien", name: "Gạch & Sàn", icon: "🧱" },
+  { id: "thô", name: "Xây dựng thô", icon: "🏗️" },
   { id: "dungcu", name: "Máy & Dụng cụ", icon: "🛠️" },
 ];
 
@@ -61,7 +83,7 @@ export default function PosPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedCustomer, setSelectedCustomer] = useState(0); // Mặc định khách lẻ
+  const [selectedCustomer, setSelectedCustomer] = useState(0); 
   const [processing, setProcessing] = useState(false);
   const [useDemoData, setUseDemoData] = useState(false);
 
@@ -120,7 +142,6 @@ export default function PosPage() {
 
   const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-  // Logic lọc sản phẩm: Theo Tìm kiếm AND Theo Danh mục
   const filteredProducts = products.filter(p => {
     const matchSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                         p.origin?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -134,13 +155,15 @@ export default function PosPage() {
 
     if (useDemoData) {
       setTimeout(() => {
-        alert(`✅ Đã thanh toán thành công!\n👤 Khách hàng: ${DEMO_CUSTOMERS.find(c=>c.id == selectedCustomer)?.name}\n💰 Tổng tiền: ${totalAmount.toLocaleString()}đ`);
+        const customer = DEMO_CUSTOMERS.find(c => c.id == selectedCustomer);
+        alert(`✅ ĐÃ TẠO ĐƠN HÀNG THÀNH CÔNG!\n\n👤 Khách hàng: ${customer?.name}\n💰 Tổng thanh toán: ${totalAmount.toLocaleString()}đ\n📦 Số lượng: ${cart.reduce((a, b) => a + b.quantity, 0)} sản phẩm`);
         setCart([]);
         setProcessing(false);
-      }, 1000); // Giả lập độ trễ mạng
+      }, 800); 
       return;
     }
 
+    // Logic gọi API thật (nếu có backend)
     const orderData = {
       order_details: cart.map(item => ({
         product_id: item.id,
@@ -168,33 +191,33 @@ export default function PosPage() {
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
-      {/* CỘT TRÁI: SẢN PHẨM */}
+      {/* CỘT TRÁI: DANH SÁCH SẢN PHẨM */}
       <div className="flex-1 flex flex-col p-4 overflow-hidden gap-4">
         
-        {/* 1. Header: Tìm kiếm & Bộ lọc */}
-        <div className="flex flex-col gap-4">
+        {/* Header: Tìm kiếm & Tabs danh mục */}
+        <div className="flex flex-col gap-3">
           {/* Thanh tìm kiếm */}
           <div className="relative shadow-sm group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
             <input 
               type="text"
-              placeholder="Tìm tên sản phẩm, thương hiệu (Bosch, Dulux), hoặc quốc gia (Nhật, Đức)..."
-              className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-lg transition-all"
+              placeholder="Tìm kiếm: Sơn Dulux, Ống Bình Minh, Khóa Việt Tiệp, Bồn cầu..."
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-base transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
-          {/* Tabs Danh mục (Nút bấm chọn loại) */}
-          <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+          {/* Tabs Danh mục (Scroll ngang) */}
+          <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium whitespace-nowrap transition-all border
+                className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium whitespace-nowrap transition-all border text-sm
                   ${selectedCategory === cat.id 
-                    ? "bg-blue-600 text-white border-blue-600 shadow-md transform scale-105" 
-                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"}`}
+                    ? "bg-blue-600 text-white border-blue-600 shadow-md" 
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-blue-600"}`}
               >
                 <span>{cat.icon}</span>
                 {cat.name}
@@ -203,49 +226,57 @@ export default function PosPage() {
           </div>
         </div>
 
-        {/* 2. Lưới sản phẩm (Grid) */}
+        {/* Grid Sản phẩm */}
         <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
           {loading ? (
             <div className="flex flex-col justify-center items-center h-full text-slate-400">
               <Loader2 className="animate-spin mb-2" size={40} />
-              <p>Đang tải dữ liệu kho...</p>
+              <p>Đang tải kho hàng...</p>
             </div>
           ) : (
             <>
               {filteredProducts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-                  <Filter size={48} className="mb-2 opacity-50" />
-                  <p>Không tìm thấy sản phẩm nào</p>
+                  <PackageOpen size={64} className="mb-4 opacity-50" />
+                  <p className="text-lg">Không tìm thấy sản phẩm nào</p>
+                  <p className="text-sm">Thử tìm từ khóa khác xem sao!</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-20">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 pb-20">
                   {filteredProducts.map((product) => (
                     <Card 
                       key={product.id}
                       onClick={() => addToCart(product)}
-                      className="cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all group border-slate-200 overflow-hidden relative"
+                      className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all group border-slate-200 overflow-hidden relative bg-white"
                     >
                       <CardContent className="p-3 flex flex-col h-full">
-                        {/* Nhãn xuất xứ (Badge) */}
+                        {/* Nhãn xuất xứ */}
                         {product.origin && (
-                          <span className="absolute top-2 right-2 text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded-full font-bold border border-slate-200 z-10">
+                          <span className="absolute top-2 right-2 text-[10px] bg-white/90 backdrop-blur text-slate-600 px-2 py-0.5 rounded-full font-bold border border-slate-100 shadow-sm z-10">
                             {product.origin}
                           </span>
                         )}
 
+                        {/* Hình ảnh (Icon lớn) */}
                         <div className="h-28 bg-slate-50 rounded-lg mb-3 flex items-center justify-center text-5xl group-hover:scale-110 transition-transform duration-300">
-                          {product.image || "📦"}
+                          {product.image}
                         </div>
                         
-                        <h3 className="font-semibold text-slate-700 line-clamp-2 text-sm mb-auto leading-snug">
+                        {/* Tên sản phẩm */}
+                        <h3 className="font-semibold text-slate-700 line-clamp-2 text-sm mb-auto leading-snug min-h-[2.5em]" title={product.name}>
                           {product.name}
                         </h3>
                         
-                        <div className="mt-3 flex justify-between items-center">
-                          <span className="text-blue-700 font-bold text-base">
-                            {product.price?.toLocaleString('vi-VN')}
-                          </span>
-                          <div className="h-8 w-8 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm">
+                        {/* Giá tiền & Nút thêm */}
+                        <div className="mt-3 flex justify-between items-end border-t border-slate-100 pt-2">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-slate-400 font-medium">Đơn giá</span>
+                            <span className="text-blue-700 font-bold text-base">
+                              {product.price?.toLocaleString('vi-VN')}
+                              <span className="text-[10px] align-top text-slate-500 font-normal">đ</span>
+                            </span>
+                          </div>
+                          <div className="h-7 w-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors">
                             <Plus size={16} strokeWidth={3} />
                           </div>
                         </div>
@@ -259,10 +290,11 @@ export default function PosPage() {
         </div>
       </div>
 
-      {/* CỘT PHẢI: HÓA ĐƠN & KHÁCH HÀNG */}
+      {/* CỘT PHẢI: HÓA ĐƠN & CÔNG NỢ */}
       <div className="w-96 bg-white border-l border-slate-200 flex flex-col h-full shadow-2xl z-20">
+        
         {/* Header Giỏ hàng */}
-        <div className="p-5 border-b border-slate-100 bg-slate-50">
+        <div className="p-5 border-b border-slate-100 bg-slate-50/80 backdrop-blur">
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold text-xl flex items-center gap-2 text-slate-800">
               <ShoppingCart className="text-blue-600" size={24} />
@@ -273,38 +305,44 @@ export default function PosPage() {
             </span>
           </div>
 
-          {/* Chọn Khách hàng (Quan trọng cho công nợ) */}
-          <div className="relative">
-            <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+          {/* Chọn Khách hàng (Có hiển thị nợ cũ) */}
+          <div className="relative group">
+            <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-blue-500 transition-colors" size={16} />
             <select 
-              className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium focus:outline-none focus:border-blue-500 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors"
+              className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white appearance-none cursor-pointer hover:border-blue-300 transition-colors shadow-sm"
               value={selectedCustomer}
               onChange={(e) => setSelectedCustomer(parseInt(e.target.value))}
             >
               {DEMO_CUSTOMERS.map(c => (
                 <option key={c.id} value={c.id}>
-                  {c.name} {c.debt ? `(Nợ: ${c.debt.toLocaleString()}đ)` : ""}
+                  {c.name} {c.debt > 0 ? `(Nợ: ${c.debt.toLocaleString()}đ)` : ""}
                 </option>
               ))}
             </select>
+            {/* Mũi tên custom cho đẹp */}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <div className="border-t-4 border-l-4 border-transparent border-t-slate-400"></div>
+            </div>
           </div>
         </div>
 
-        {/* Danh sách món đã chọn */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+        {/* Danh sách món đã chọn (Giỏ hàng) */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-4 opacity-70">
-              <ShoppingCart size={64} strokeWidth={1} />
+            <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-4 opacity-60">
+              <div className="bg-slate-100 p-6 rounded-full">
+                <ShoppingCart size={48} strokeWidth={1.5} />
+              </div>
               <p className="font-medium text-sm">Chưa có sản phẩm nào</p>
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.id} className="flex gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all group animate-in slide-in-from-bottom-2 duration-300">
-                <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center text-lg shrink-0">
-                  {item.image || "📦"}
+              <div key={item.id} className="flex gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group animate-in slide-in-from-right-4 duration-300">
+                <div className="h-12 w-12 bg-blue-50 rounded-lg flex items-center justify-center text-xl shrink-0 select-none">
+                  {item.image}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-slate-700 text-sm truncate">{item.name}</div>
+                  <div className="font-medium text-slate-800 text-sm truncate" title={item.name}>{item.name}</div>
                   <div className="text-slate-500 text-xs mt-0.5">
                     {item.price.toLocaleString()} x {item.quantity}
                   </div>
@@ -313,16 +351,16 @@ export default function PosPage() {
                   </div>
                 </div>
                 
-                <div className="flex flex-col items-end justify-between">
-                  <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-red-500 p-1 transition-colors">
+                <div className="flex flex-col items-end justify-between gap-2">
+                  <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-red-500 p-1 transition-colors rounded hover:bg-red-50">
                     <Trash2 size={14} />
                   </button>
                   <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
-                    <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:bg-white rounded-md text-slate-600 transition-colors shadow-sm">
+                    <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:bg-white hover:text-red-500 rounded-md text-slate-600 transition-all shadow-sm">
                       <Minus size={12} />
                     </button>
-                    <span className="w-6 text-center text-xs font-bold select-none">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:bg-white rounded-md text-blue-600 transition-colors shadow-sm">
+                    <span className="w-7 text-center text-xs font-bold select-none">{item.quantity}</span>
+                    <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:bg-white hover:text-blue-600 rounded-md text-slate-600 transition-all shadow-sm">
                       <Plus size={12} />
                     </button>
                   </div>
@@ -333,20 +371,26 @@ export default function PosPage() {
         </div>
 
         {/* Footer Thanh toán */}
-        <div className="p-5 border-t border-slate-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <div className="space-y-2 mb-4 text-sm">
+        <div className="p-5 border-t border-slate-200 bg-white shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-30">
+          <div className="space-y-3 mb-5 text-sm">
             <div className="flex justify-between text-slate-500">
               <span>Tạm tính</span>
               <span>{totalAmount.toLocaleString()}đ</span>
             </div>
-            <div className="flex justify-between text-slate-500">
-              <span>Thuế (VAT 0%)</span>
-              <span>0đ</span>
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t border-dashed border-slate-200">
-              <span className="font-bold text-slate-800">Tổng thanh toán</span>
-              <span className="text-2xl font-bold text-blue-600">
-                {totalAmount.toLocaleString()}đ
+            {selectedCustomer !== 0 && DEMO_CUSTOMERS.find(c => c.id === selectedCustomer)?.debt > 0 && (
+              <div className="flex justify-between text-red-500 font-medium bg-red-50 px-2 py-1 rounded">
+                <span>Nợ cũ</span>
+                <span>{DEMO_CUSTOMERS.find(c => c.id === selectedCustomer)?.debt.toLocaleString()}đ</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center pt-3 border-t border-dashed border-slate-200">
+              <div className="flex flex-col">
+                <span className="font-bold text-slate-800 text-base">TỔNG CỘNG</span>
+                <span className="text-[10px] text-slate-400 font-normal uppercase">Đã bao gồm VAT</span>
+              </div>
+              <span className="text-2xl font-extrabold text-blue-600">
+                {totalAmount.toLocaleString()}
+                <span className="text-sm font-medium ml-0.5 text-blue-400">đ</span>
               </span>
             </div>
           </div>
@@ -354,13 +398,13 @@ export default function PosPage() {
           <button
             disabled={cart.length === 0 || processing}
             onClick={handleCheckout}
-            className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all transform active:scale-95
+            className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition-all transform active:scale-95
               ${cart.length === 0 
-                ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/30 hover:from-blue-500 hover:to-indigo-500'
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none' 
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500'
               }`}
           >
-            {processing ? <><Loader2 className="animate-spin" /> Đang tạo đơn...</> : "THANH TOÁN"}
+            {processing ? <><Loader2 className="animate-spin" /> Đang xử lý...</> : "THANH TOÁN NGAY"}
           </button>
         </div>
       </div>
