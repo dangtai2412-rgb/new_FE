@@ -35,5 +35,3 @@ export default function RootLayout({ children }) {
   );
 }
 
-// --- Tạo file mới: src/components/layout_wrapper.jsx ---
-// (Bạn tạo file này và import vào layout.js ở trên nhé)
