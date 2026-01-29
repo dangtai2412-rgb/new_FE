@@ -1,13 +1,18 @@
-"use client";
+"use client"
 
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { api_service } from "@/lib/api_service";
 import { 
-  Search, Plus, Filter, RefreshCw, Trash2, Pencil, 
-  Package, AlertTriangle, TrendingUp 
+  Plus, 
+  Search, 
+  Pencil, 
+  Trash2, 
+  Package, 
+  AlertCircle,
+  CheckCircle2,
+  Box,
+  Filter
 } from "lucide-react";
-
-// Import các component giao diện (Shadcn UI) từ code gốc của bạn
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -20,183 +25,179 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Dữ liệu mẫu (Dùng khi API bị lỗi hoặc chưa có Backend)
-const DEMO_PRODUCTS = [
-  { id: "SP001", name: "Xi măng Hà Tiên Đa Dụng", category: "Vật liệu thô", stock: 150, unit: "Bao", cost_price: 82000, sale_price: 90000 },
-  { id: "SP002", name: "Gạch ống Tuynel 8x18", category: "Gạch xây", stock: 5000, unit: "Viên", cost_price: 1100, sale_price: 1350 },
-  { id: "SP003", name: "Thép vằn Hòa Phát Ø10", category: "Sắt thép", stock: 8, unit: "Cây", cost_price: 115000, sale_price: 125000 },
-  { id: "SP004", name: "Sơn Dulux 5L Nội Thất", category: "Sơn", stock: 5, unit: "Thùng", cost_price: 450000, sale_price: 520000 },
-  { id: "SP005", name: "Cát vàng bê tông (Sông Lô)", category: "Vật liệu thô", stock: 0, unit: "m3", cost_price: 420000, sale_price: 550000 },
-];
-
 export default function InventoryPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Hàm load dữ liệu
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      // Gọi API thật
-      const data = await api_service.get_products();
-      
-      if (Array.isArray(data) && data.length > 0) {
-        setProducts(data);
-      } else {
-        console.warn("⚠️ API rỗng hoặc lỗi, hiển thị dữ liệu mẫu.");
-        setProducts(DEMO_PRODUCTS);
-      }
-    } catch (error) {
-      console.error("Lỗi tải trang kho:", error);
-      setProducts(DEMO_PRODUCTS); 
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchProducts();
+    api_service.get_products()
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(err => console.error(err));
   }, []);
 
-  // Xử lý tìm kiếm
-  const filteredProducts = products.filter((p) =>
-    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.id?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Hàm helper để xác định trạng thái tồn kho
+  const getStockStatus = (stock) => {
+    if (stock === 0) return { label: "Hết hàng", color: "bg-red-100 text-red-700 border-red-200", icon: AlertCircle };
+    if (stock < 10) return { label: "Sắp hết", color: "bg-yellow-100 text-yellow-700 border-yellow-200", icon: AlertCircle };
+    return { label: "Có sẵn", color: "bg-green-100 text-green-700 border-green-200", icon: CheckCircle2 };
+  };
+
+  // Lọc sản phẩm client-side (cho demo mượt hơn)
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center space-x-2">
+      <div className="h-4 w-4 animate-bounce rounded-full bg-blue-600 delay-100"></div>
+      <div className="h-4 w-4 animate-bounce rounded-full bg-blue-600 delay-200"></div>
+      <div className="h-4 w-4 animate-bounce rounded-full bg-blue-600 delay-300"></div>
+    </div>
   );
 
   return (
-    <div className="space-y-6">
-      
-      {/* 1. HEADER: Tiêu đề & Nút thêm mới */}
+    <div className="space-y-6 p-2 md:p-6 bg-slate-50 min-h-screen">
+      {/* 1. Header Section đẹp hơn */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            Quản lý Kho hàng
-          </h2>
-          <p className="text-sm text-slate-500 mt-1">Theo dõi tồn kho, giá vốn và hiệu quả kinh doanh.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Kho Hàng</h2>
+          <p className="text-slate-500 mt-1">Quản lý danh sách sản phẩm, giá vốn và tồn kho hiện tại.</p>
         </div>
-        <div className="flex gap-2">
-           <Button variant="outline" onClick={fetchProducts} className="gap-2">
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Tải lại
-          </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
-            <Plus size={18} /> Thêm sản phẩm
-          </Button>
-        </div>
+        <Button className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95">
+          <Plus size={18} className="mr-2" />
+          Thêm sản phẩm mới
+        </Button>
       </div>
 
-      {/* 2. CÔNG CỤ: Tìm kiếm & Lọc */}
-      <Card>
-        <CardContent className="p-4 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
+      {/* 2. Thanh công cụ tìm kiếm & lọc */}
+      <Card className="border-none shadow-sm bg-white">
+        <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <Input 
-                placeholder="Tìm kiếm theo mã hoặc tên sản phẩm..." 
-                className="pl-10" 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm kiếm theo tên, mã SKU..." 
+              className="pl-10 border-slate-200 focus-visible:ring-blue-500" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-            </div>
-            <Button variant="outline" className="gap-2">
-                <Filter size={16} /> Bộ lọc
-            </Button>
+          </div>
+          <Button variant="outline" className="border-slate-200 text-slate-600 hover:bg-slate-50 w-full md:w-auto">
+            <Filter size={16} className="mr-2" />
+            Bộ lọc
+          </Button>
         </CardContent>
       </Card>
 
-      {/* 3. BẢNG DỮ LIỆU (Dùng Component Table của Shadcn) */}
-      <Card>
-        <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-            <Package size={20} className="text-blue-600" />
-            Danh sách hàng hóa
-            </CardTitle>
+      {/* 3. Bảng dữ liệu chính */}
+      <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4">
+          <CardTitle className="text-base font-semibold text-slate-700 flex items-center gap-2">
+            <Package size={18} className="text-blue-500" />
+            Danh sách sản phẩm ({filteredProducts.length})
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader className="bg-slate-50">
-                    <TableRow>
-                        <TableHead className="w-[100px]">Mã SP</TableHead>
-                        <TableHead>Tên sản phẩm</TableHead>
-                        <TableHead>Danh mục</TableHead>
-                        <TableHead className="text-center">Tồn kho</TableHead>
-                        <TableHead className="text-right">Giá vốn</TableHead>
-                        <TableHead className="text-right">Giá bán</TableHead>
-                        <TableHead className="text-right text-emerald-600">Lãi gộp</TableHead>
-                        <TableHead className="text-center">Thao tác</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {loading ? (
-                        // Skeleton loading đơn giản
-                        [...Array(5)].map((_, i) => (
-                        <TableRow key={i}>
-                            <TableCell colSpan={8} className="h-12 animate-pulse bg-slate-50/50" />
-                        </TableRow>
-                        ))
-                    ) : filteredProducts.length === 0 ? (
-                        <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-slate-500">
-                            Không tìm thấy sản phẩm nào.
-                        </TableCell>
-                        </TableRow>
-                    ) : (
-                        filteredProducts.map((p) => {
-                        const profit = (p.sale_price || 0) - (p.cost_price || 0);
-                        const stock = p.stock ?? 0;
+        
+        <div className="relative">
+          <Table>
+            <TableHeader className="bg-slate-50">
+              <TableRow>
+                <TableHead className="w-[300px] pl-6">Sản phẩm</TableHead>
+                <TableHead>Danh mục</TableHead>
+                <TableHead className="text-center">Trạng thái kho</TableHead>
+                <TableHead className="text-right">Giá bán / Giá vốn</TableHead>
+                <TableHead className="text-center w-[120px]">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((p) => {
+                  const status = getStockStatus(p.stock);
+                  const StatusIcon = status.icon;
 
-                        return (
-                            <TableRow key={p.id} className="hover:bg-slate-50">
-                            <TableCell className="font-medium text-slate-500 text-xs">
-                                {p.id}
-                            </TableCell>
-                            <TableCell className="font-semibold text-slate-800">
-                                <div>{p.name}</div>
-                                {/* Dùng div bên trong TableCell là hợp lệ */}
-                                <div className="text-[11px] font-normal text-slate-400 md:hidden">{p.unit}</div>
-                            </TableCell>
-                            <TableCell>
-                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-600">
-                                {p.category}
-                                </span>
-                            </TableCell>
-                            <TableCell className="text-center">
-                                <div className={`flex items-center justify-center font-bold ${stock < 10 ? 'text-red-600' : 'text-slate-700'}`}>
-                                    {stock < 10 && <AlertTriangle size={14} className="mr-1.5 animate-pulse" />}
-                                    {stock.toLocaleString()} <span className="text-[10px] font-normal text-slate-400 ml-1">{p.unit}</span>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-right text-slate-500">
-                                {(p.cost_price || 0).toLocaleString()}đ
-                            </TableCell>
-                            <TableCell className="text-right font-bold text-blue-700">
-                                {(p.sale_price || 0).toLocaleString()}đ
-                            </TableCell>
-                            <TableCell className="text-right font-medium text-emerald-600">
-                                <div className="flex items-center justify-end gap-1">
-                                <TrendingUp size={14} />
-                                {profit.toLocaleString()}đ
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                                <div className="flex justify-center gap-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50">
-                                    <Pencil size={16} />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50">
-                                    <Trash2 size={16} />
-                                </Button>
-                                </div>
-                            </TableCell>
-                            </TableRow>
-                        );
-                        })
-                    )}
-                    </TableBody>
-                </Table>
-            </div>
-        </CardContent>
+                  return (
+                    <TableRow key={p.id} className="group hover:bg-blue-50/30 transition-colors cursor-pointer">
+                      {/* Cột Sản phẩm: Gộp Tên và Mã */}
+                      <TableCell className="pl-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">
+                            {p.name}
+                          </span>
+                          <span className="text-xs text-slate-400 font-mono mt-0.5 flex items-center gap-1">
+                            <Box size={10} /> SKU: {p.id}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Cột Danh mục: Badge bo tròn */}
+                      <TableCell>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                          {p.category}
+                        </span>
+                      </TableCell>
+
+                      {/* Cột Tồn kho: Thiết kế Badge trạng thái */}
+                      <TableCell className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${status.color}`}>
+                            <StatusIcon size={12} />
+                            {status.label}
+                          </span>
+                          <span className="text-xs text-slate-500 font-medium">
+                            {p.stock.toLocaleString()} {p.unit}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Cột Giá: Gộp Giá bán và Giá vốn */}
+                      <TableCell className="text-right">
+                        <div className="flex flex-col items-end">
+                          <span className="font-bold text-slate-900" suppressHydrationWarning>
+                            {p.sale_price.toLocaleString()}đ
+                          </span>
+                          <span className="text-xs text-slate-400" suppressHydrationWarning>
+                            Vốn: {p.cost_price.toLocaleString()}đ
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Cột Thao tác: Nút bấm đẹp hơn */}
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50">
+                            <Pencil size={16} />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-red-600 hover:bg-red-50">
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                /* Empty State đẹp mắt */
+                <TableRow>
+                  <TableCell colSpan={5} className="h-[300px] text-center">
+                    <div className="flex flex-col items-center justify-center text-slate-400 space-y-3">
+                      <div className="p-4 bg-slate-50 rounded-full">
+                        <Package size={40} className="text-slate-300" />
+                      </div>
+                      <p className="text-lg font-medium text-slate-600">Không tìm thấy sản phẩm nào</p>
+                      <p className="text-sm max-w-xs mx-auto">
+                        Thử thay đổi từ khóa tìm kiếm hoặc thêm sản phẩm mới vào kho hàng.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
     </div>
   );
