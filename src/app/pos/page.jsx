@@ -19,6 +19,7 @@ const DEMO_CUSTOMERS = [
   { id: 5, name: "Anh Tâm (KTS Nội thất)", phone: "0933444555", debt: 0, type: "vip" },
 ];
 
+
 // --- 2. KHO HÀNG KHỔNG LỒ (Đã khôi phục đầy đủ) ---
 const DEMO_PRODUCTS = [
   // === NHÓM 1: SƠN & HÓA CHẤT ===
