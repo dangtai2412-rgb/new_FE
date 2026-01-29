@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   Users, ArrowUpCircle, ArrowDownCircle, Search, Plus, 
-  Filter, RefreshCw, Wallet, Phone, MapPin, AlertCircle 
+  Filter, RefreshCw, Wallet, Phone, AlertCircle 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
-import { api_service } from "@/lib/api_service"; // Import service API
 
-// --- DỮ LIỆU MẪU (Dùng khi chưa có API) ---
+// --- IMPORT THÊM CHO MODAL ---
+import { 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+
+// --- DỮ LIỆU MẪU ---
 const DEMO_CUSTOMERS = [
   { id: "KH001", name: "Thầu XD Nguyễn Văn B", phone: "0909123456", type: "Phải thu", amount: 12000000, limit: 15000000, status: "Quá hạn" },
   { id: "KH002", name: "Cửa hàng Điện Nước C", phone: "0912345678", type: "Phải thu", amount: 5500000, limit: 10000000, status: "Trong hạn" },
@@ -26,24 +31,25 @@ const DEMO_SUPPLIERS = [
 ];
 
 export default function DebtPage() {
-  const [activeTab, setActiveTab] = useState("receivables"); // 'receivables' (Phải thu) hoặc 'payables' (Phải trả)
+  const [activeTab, setActiveTab] = useState("receivables");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Hàm load dữ liệu giả lập (hoặc gọi API sau này)
+  // --- STATE CHO MODAL ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newPartner, setNewPartner] = useState({
+    name: "",
+    phone: "",
+    type: "receivables",
+    limit: 0
+  });
+
   const loadData = async () => {
     setLoading(true);
     try {
-      // Sau này bạn có thể thay bằng: await api_service.get_customers() hoặc get_suppliers()
-      // Hiện tại mình dùng setTimeout để giả lập việc tải dữ liệu
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      if (activeTab === "receivables") {
-        setData(DEMO_CUSTOMERS);
-      } else {
-        setData(DEMO_SUPPLIERS);
-      }
+      setData(activeTab === "receivables" ? DEMO_CUSTOMERS : DEMO_SUPPLIERS);
     } catch (error) {
       console.error("Lỗi tải dữ liệu:", error);
     } finally {
@@ -52,14 +58,22 @@ export default function DebtPage() {
   };
 
   useEffect(() => {
+    setSearchTerm(""); // Reset tìm kiếm khi đổi tab
     loadData();
   }, [activeTab]);
 
-  // Tính toán tổng quan
-  const totalReceivable = DEMO_CUSTOMERS.reduce((sum, item) => sum + item.amount, 0);
-  const totalPayable = DEMO_SUPPLIERS.reduce((sum, item) => sum + item.amount, 0);
+  // Xử lý lưu đối tác mới
+  const handleSavePartner = () => {
+    console.log("Dữ liệu mới:", newPartner);
+    // Giả lập lưu thành công
+    alert(`Đã thêm: ${newPartner.name}`);
+    setIsModalOpen(false);
+    setNewPartner({ name: "", phone: "", type: "receivables", limit: 0 });
+  };
 
-  // Lọc dữ liệu theo từ khóa tìm kiếm
+  const totalReceivable = useMemo(() => DEMO_CUSTOMERS.reduce((sum, item) => sum + item.amount, 0), []);
+  const totalPayable = useMemo(() => DEMO_SUPPLIERS.reduce((sum, item) => sum + item.amount, 0), []);
+
   const filteredData = data.filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.phone.includes(searchTerm)
@@ -67,33 +81,28 @@ export default function DebtPage() {
 
   return (
     <div className="space-y-6">
-      
       {/* 1. HEADER & ACTIONS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            Đối tác & Công nợ
-          </h2>
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">Đối tác & Công nợ</h2>
           <p className="text-sm text-slate-500 mt-1">Quản lý dòng tiền phải thu và phải trả.</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={loadData} className="gap-2">
             <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Tải lại
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
+          <Button className="bg-blue-600 hover:bg-blue-700 gap-2" onClick={() => setIsModalOpen(true)}>
             <Plus size={18} /> Thêm Đối tác
           </Button>
         </div>
       </div>
 
-      {/* 2. DASHBOARD CARDS (Thống kê tiền) */}
+      {/* 2. DASHBOARD CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card Phải Thu */}
-        <Card className={`border-l-4 border-l-emerald-500 shadow-sm transition-all ${activeTab === 'receivables' ? 'ring-2 ring-emerald-200' : 'opacity-80'}`}>
+        <Card className={`border-l-4 border-l-emerald-500 shadow-sm ${activeTab === 'receivables' ? 'ring-2 ring-emerald-200' : ''}`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500 flex justify-between">
-              Phải Thu (Khách nợ mình)
-              <ArrowDownCircle className="text-emerald-500 h-5 w-5" />
+              Phải Thu <ArrowDownCircle className="text-emerald-500 h-5 w-5" />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -101,12 +110,10 @@ export default function DebtPage() {
           </CardContent>
         </Card>
 
-        {/* Card Phải Trả */}
-        <Card className={`border-l-4 border-l-red-500 shadow-sm transition-all ${activeTab === 'payables' ? 'ring-2 ring-red-200' : 'opacity-80'}`}>
+        <Card className={`border-l-4 border-l-red-500 shadow-sm ${activeTab === 'payables' ? 'ring-2 ring-red-200' : ''}`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500 flex justify-between">
-              Phải Trả (Nợ nhà cung cấp)
-              <ArrowUpCircle className="text-red-500 h-5 w-5" />
+              Phải Trả <ArrowUpCircle className="text-red-500 h-5 w-5" />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -114,12 +121,10 @@ export default function DebtPage() {
           </CardContent>
         </Card>
 
-        {/* Card Dòng tiền ròng */}
         <Card className="border-l-4 border-l-blue-500 shadow-sm bg-blue-50/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500 flex justify-between">
-              Dòng tiền ròng
-              <Wallet className="text-blue-500 h-5 w-5" />
+              Dòng tiền ròng <Wallet className="text-blue-500 h-5 w-5" />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -128,32 +133,29 @@ export default function DebtPage() {
         </Card>
       </div>
 
-      {/* 3. MAIN CONTENT */}
+      {/* 3. MAIN TABLE */}
       <Card className="min-h-[500px]">
         <CardHeader className="pb-3 border-b border-slate-100">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            
-            {/* Bộ chuyển Tab thủ công (Custom Tabs) */}
             <div className="flex p-1 bg-slate-100 rounded-lg w-full md:w-auto">
               <button 
                 onClick={() => setActiveTab("receivables")}
-                className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${activeTab === "receivables" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${activeTab === "receivables" ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500"}`}
               >
                 <Users size={16} /> Khách hàng
               </button>
               <button 
                 onClick={() => setActiveTab("payables")}
-                className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${activeTab === "payables" ? "bg-white text-red-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${activeTab === "payables" ? "bg-white text-red-700 shadow-sm" : "text-slate-500"}`}
               >
                 <Filter size={16} /> Nhà cung cấp
               </button>
             </div>
 
-            {/* Ô tìm kiếm */}
             <div className="relative w-full md:w-72">
               <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
               <Input 
-                placeholder={`Tìm ${activeTab === 'receivables' ? 'khách hàng' : 'nhà cung cấp'}...`} 
+                placeholder="Tìm kiếm..." 
                 className="pl-10 h-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)} 
@@ -175,73 +177,83 @@ export default function DebtPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12 text-slate-400">
-                    Không tìm thấy dữ liệu.
+              {filteredData.map((d) => (
+                <TableRow key={d.id} className="hover:bg-slate-50">
+                  <TableCell>
+                    <div className="font-semibold text-slate-700">{d.name}</div>
+                    <div className="text-[11px] text-slate-400 font-mono">{d.id}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Phone size={14} /> {d.phone}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-bold text-base">
+                    {d.amount.toLocaleString()}đ
+                  </TableCell>
+                  {activeTab === 'receivables' && (
+                    <TableCell className="text-center px-6">
+                       <span className="text-xs text-slate-500">{d.limit?.toLocaleString()}</span>
+                    </TableCell>
+                  )}
+                  <TableCell className="text-center">
+                    <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase border">
+                      {d.status}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button variant="ghost" size="sm" className="text-blue-600">Chi tiết</Button>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredData.map((d) => (
-                  <TableRow key={d.id} className="hover:bg-slate-50 transition-colors">
-                    <TableCell>
-                      <div className="font-semibold text-slate-700">{d.name}</div>
-                      <div className="text-[11px] text-slate-400 font-mono">{d.id}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Phone size={14} className="text-slate-400" /> {d.phone}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className={`font-bold text-base ${d.amount > 0 ? (activeTab === 'receivables' ? 'text-emerald-600' : 'text-red-600') : 'text-slate-400'}`}>
-                        {d.amount.toLocaleString()}đ
-                      </span>
-                    </TableCell>
-                    
-                    {/* Cột Hạn mức nợ (Chỉ hiện cho khách hàng) */}
-                    {activeTab === 'receivables' && (
-                      <TableCell className="text-center px-6">
-                         {d.limit > 0 ? (
-                           <div className="w-full">
-                             <div className="flex justify-between text-[10px] text-slate-500 mb-1">
-                               <span>{Math.round((d.amount/d.limit)*100)}%</span>
-                               <span>{d.limit.toLocaleString()}</span>
-                             </div>
-                             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                               <div 
-                                 className={`h-full ${d.amount > d.limit ? 'bg-red-500' : (d.amount > d.limit * 0.8 ? 'bg-orange-400' : 'bg-blue-400')}`} 
-                                 style={{ width: `${Math.min((d.amount/d.limit)*100, 100)}%` }}
-                               ></div>
-                             </div>
-                           </div>
-                         ) : <span className="text-xs text-slate-400">Không giới hạn</span>}
-                      </TableCell>
-                    )}
-
-                    <TableCell className="text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border shadow-sm inline-flex items-center gap-1
-                        ${d.status === "Quá hạn" ? "bg-red-50 text-red-700 border-red-200" : 
-                          d.status === "Đang nợ" ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
-                          d.status === "Trong hạn" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          "bg-slate-100 text-slate-600 border-slate-200"
-                        }`}>
-                        {d.status === "Quá hạn" && <AlertCircle size={10} />}
-                        {d.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium h-8">
-                        Chi tiết
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* --- MODAL THÊM ĐỐI TÁC --- */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-800">Thêm đối tác mới</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 text-slate-700">
+            <div className="grid gap-2 text-left">
+              <Label htmlFor="name">Tên đối tác <span className="text-red-500">*</span></Label>
+              <Input 
+                id="name" 
+                value={newPartner.name}
+                onChange={(e) => setNewPartner({...newPartner, name: e.target.value})}
+                placeholder="Nguyễn Văn A" 
+              />
+            </div>
+            <div className="grid gap-2 text-left">
+              <Label htmlFor="phone">Số điện thoại</Label>
+              <Input 
+                id="phone" 
+                value={newPartner.phone}
+                onChange={(e) => setNewPartner({...newPartner, phone: e.target.value})}
+                placeholder="090..." 
+              />
+            </div>
+            <div className="grid gap-2 text-left">
+              <Label>Loại đối tác</Label>
+              <select 
+                className="w-full p-2 border rounded-md"
+                value={newPartner.type}
+                onChange={(e) => setNewPartner({...newPartner, type: e.target.value})}
+              >
+                <option value="receivables">Khách hàng (Phải thu)</option>
+                <option value="payables">Nhà cung cấp (Phải trả)</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Hủy</Button>
+            <Button className="bg-blue-600" onClick={handleSavePartner}>Lưu thông tin</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
