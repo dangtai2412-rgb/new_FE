@@ -1,19 +1,11 @@
-// src/lib/api_service.js (Bổ sung thêm vào file hiện có)
-
-// ... (Giữ nguyên các hàm cũ)
+// src/lib/api_service.js (Thêm vào object api_service)
 
 export const api_service = {
-  // ... (code cũ: products, categories...)
+  // ... (giữ nguyên code cũ)
 
-  // --- KHÁCH HÀNG ---
-  get_customers: async () => {
-    try { return await fetchClient("/customers/"); } 
-    catch (e) { console.warn("API customers lỗi/chưa có, dùng list rỗng."); return []; }
+  // --- ORDER HISTORY (DASHBOARD) ---
+  get_orders: async () => {
+    try { return await fetchClient("/orders/"); } 
+    catch (e) { console.warn("API orders lỗi/chưa có, trả về rỗng."); return []; }
   },
-
-  // --- ĐƠN HÀNG (POS) ---
-  create_order: (orderData) => fetchClient("/orders/", {
-    method: "POST",
-    body: JSON.stringify(orderData)
-  }),
 };
