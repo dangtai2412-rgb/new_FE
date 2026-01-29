@@ -1,48 +1,63 @@
 // src/lib/api_service.js
 
-const BASE_URL = "http://localhost:9999/api/v1"; // Kiểm tra lại port backend của bạn
+const BASE_URL = "http://localhost:9999/api/v1"; // Đảm bảo đúng port Backend của bạn
 
-// Hàm helper để gọi fetch gọn hơn
+// Hàm helper gọi API chung
 const fetchClient = async (endpoint, options = {}) => {
-    if (typeof window === "undefined") return null;
-    const token = localStorage.getItem("token");
-    if (!token) return null;
+  if (typeof window === "undefined") return null;
+  const token = localStorage.getItem("token");
+  
+  // Lưu ý: Nếu user chưa đăng nhập (không có token), API có thể trả về 401.
+  // Ở đây ta cứ gửi request, để Backend quyết định.
+  
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`, // Gửi kèm token nếu có
+      ...options.headers,
+    },
+  });
 
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-            ...options.headers,
-        },
-    });
+  if (!res.ok) {
+    const errorText = await res.text();
+    // Ném lỗi ra để component xử lý (hiện thông báo cho user)
+    throw new Error(`Lỗi Server (${res.status}): ${errorText}`);
+  }
 
-    if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Lỗi ${res.status}: ${errorText}`);
-    }
-    return res.json();
+  // Nếu response không có nội dung (VD: 204 No Content), trả về null
+  if (res.status === 204) return null;
+
+  return res.json();
 };
 
 export const api_service = {
-    // 1. Sản phẩm (CRUD)
-    get_products: () => fetchClient("/products/"),
-    
-    create_product: (data) => fetchClient("/products/", {
-        method: "POST",
-        body: JSON.stringify(data)
-    }),
+  // --- SẢN PHẨM ---
+  get_products: () => fetchClient("/products/"),
+  
+  create_product: (data) => fetchClient("/products/", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }),
 
-    update_product: (id, data) => fetchClient(`/products/${id}`, {
-        method: "PUT", // Hoặc PATCH tùy backend
-        body: JSON.stringify(data)
-    }),
+  update_product: (id, data) => fetchClient(`/products/${id}`, {
+    method: "PUT", // Nếu Backend bạn dùng PATCH thì sửa thành "PATCH"
+    body: JSON.stringify(data),
+  }),
 
-    delete_product: (id) => fetchClient(`/products/${id}`, {
-        method: "DELETE"
-    }),
+  delete_product: (id) => fetchClient(`/products/${id}`, {
+    method: "DELETE",
+  }),
 
-    // 2. Danh mục & Đơn vị (Để hiển thị trong Dropdown)
-    get_categories: () => fetchClient("/categories/"),
-    get_units: () => fetchClient("/units/"),
+  // --- DANH MỤC & ĐƠN VỊ ---
+  // Thêm catch() để nếu Backend chưa có API này thì không bị chết trang
+  get_categories: async () => {
+    try { return await fetchClient("/categories/"); } 
+    catch (e) { console.warn("Chưa có API categories, dùng danh sách rỗng."); return []; }
+  },
+  
+  get_units: async () => {
+    try { return await fetchClient("/units/"); } 
+    catch (e) { console.warn("Chưa có API units, dùng danh sách rỗng."); return []; }
+  },
 };
