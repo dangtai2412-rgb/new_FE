@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Users, ArrowUpCircle, ArrowDownCircle, Search, Plus, 
-  RefreshCw, Wallet, Phone, Trash2, AlertCircle, TrendingUp, Banknote
+  RefreshCw, Wallet, Phone, Trash2, AlertCircle, TrendingUp, Banknote, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,42 +23,36 @@ const INITIAL_CUSTOMERS = [
   { id: "KH003", name: "Anh Tâm (Khách lẻ)", phone: "0987654321", amount: 0, limit: 5000000, status: "Không nợ" },
 ];
 
-const INITIAL_SUPPLIERS = [
-  { id: "NCC01", name: "Đại lý VLXD A", phone: "0283888999", amount: 45000000, limit: 0, status: "Đang nợ" },
-  { id: "NCC02", name: "Kho Thép Hòa Phát", phone: "0274111222", amount: 0, limit: 0, status: "Đã thanh toán" },
-];
-
 export default function DebtPage() {
   const [activeTab, setActiveTab] = useState("receivables");
   const [data, setData] = useState(INITIAL_CUSTOMERS);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Modals States
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  // States cho Modals
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
-  const [newPartner, setNewPartner] = useState({ name: "", phone: "", limit: 0 });
 
-  useEffect(() => {
-    setData(activeTab === "receivables" ? INITIAL_CUSTOMERS : INITIAL_SUPPLIERS);
-  }, [activeTab]);
-
-  // --- HÀM XỬ LÝ THANH TOÁN (THU/TRẢ NỢ) ---
+  // --- HÀM XỬ LÝ THU NỢ / TRẢ NỢ ---
   const handlePayment = () => {
-    const amountToPay = Number(paymentAmount);
-    if (!amountToPay || amountToPay <= 0) return alert("Vui lòng nhập số tiền hợp lệ");
+    const payValue = Number(paymentAmount);
+    
+    if (!payValue || payValue <= 0) {
+      alert("Vui lòng nhập số tiền hợp lệ!");
+      return;
+    }
 
     const updatedData = data.map(item => {
       if (item.id === selectedPartner.id) {
-        const newAmount = item.amount - amountToPay;
-        return { 
-          ...item, 
-          amount: newAmount < 0 ? 0 : newAmount, // Không cho nợ âm
-          status: newAmount <= 0 ? (activeTab === "receivables" ? "Không nợ" : "Đã thanh toán") : item.status
-        };
+        const newAmount = Math.max(0, item.amount - payValue);
+        let newStatus = item.status;
+        
+        // Cập nhật trạng thái dựa trên số dư mới
+        if (newAmount === 0) newStatus = "Đã xong";
+        else if (newAmount < item.limit) newStatus = "Trong hạn";
+
+        return { ...item, amount: newAmount, status: newStatus };
       }
       return item;
     });
@@ -66,7 +60,7 @@ export default function DebtPage() {
     setData(updatedData);
     setIsPaymentOpen(false);
     setPaymentAmount("");
-    alert(`Đã cập nhật thanh toán cho ${selectedPartner.name}`);
+    // Trong thực tế bạn sẽ gọi API ở đây
   };
 
   const filteredData = data.filter(item => 
@@ -74,97 +68,72 @@ export default function DebtPage() {
   );
 
   return (
-    <div className="space-y-8 p-4 md:p-8 bg-slate-50/30 min-h-screen">
+    <div className="space-y-8 p-6 bg-slate-50/50 min-h-screen font-sans">
       
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-center bg-[#1e293b] p-6 rounded-3xl shadow-2xl text-white gap-6">
+      {/* 1. HEADER (Giữ phong cách đặc sắc) */}
+      <div className="flex flex-col md:flex-row justify-between items-center bg-[#0f172a] p-8 rounded-[2rem] shadow-2xl text-white gap-6">
         <div>
-          <h1 className="text-3xl font-black flex items-center gap-3">
-            Quản lý <span className="text-emerald-400">Dòng tiền</span>
-          </h1>
+          <h1 className="text-3xl font-black tracking-tight italic">FINANCE<span className="text-emerald-400">PRO</span></h1>
+          <p className="text-slate-400 text-sm">Quản lý dòng tiền & Đối soát nợ</p>
         </div>
-        <div className="flex gap-3 w-full md:w-auto">
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-4 top-3 text-slate-500" size={20} />
           <Input 
-            placeholder="Tìm đối tác..." 
-            className="bg-slate-800 border-none text-white rounded-2xl h-11"
+            placeholder="Tìm kiếm nhanh..." 
+            className="pl-12 bg-slate-800/50 border-none text-white rounded-2xl h-12 focus:ring-2 focus:ring-emerald-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button className="bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-11 px-6 font-bold" onClick={() => setIsModalOpen(true)}>
-            <Plus size={20} />
-          </Button>
         </div>
       </div>
 
-      {/* STATS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="rounded-3xl shadow-xl border-none"><CardContent className="p-6">
-          <ArrowDownCircle className="text-emerald-500 mb-2" size={32} />
-          <p className="text-xs font-bold text-slate-400 uppercase">Phải thu</p>
-          <p className="text-2xl font-black text-slate-800">18.000.000đ</p>
-        </CardContent></Card>
-        <Card className="rounded-3xl shadow-xl border-none"><CardContent className="p-6">
-          <ArrowUpCircle className="text-rose-500 mb-2" size={32} />
-          <p className="text-xs font-bold text-slate-400 uppercase">Phải trả</p>
-          <p className="text-2xl font-black text-slate-800">45.000.000đ</p>
-        </CardContent></Card>
-        <Card className="rounded-3xl shadow-xl border-none bg-emerald-600 text-white"><CardContent className="p-6">
-          <Wallet className="mb-2" size={32} />
-          <p className="text-xs font-bold opacity-80 uppercase">Số dư ròng</p>
-          <p className="text-2xl font-black">-27.000.000đ</p>
-        </CardContent></Card>
-      </div>
-
-      {/* TABLE SECTION */}
-      <Card className="border-none shadow-2xl rounded-[2rem] overflow-hidden bg-white">
-        <div className="p-6 border-b flex justify-between items-center">
-          <div className="flex p-1 bg-slate-100 rounded-2xl">
-            <button onClick={() => setActiveTab("receivables")} className={`px-6 py-2 rounded-xl text-sm font-bold ${activeTab === "receivables" ? "bg-white shadow text-emerald-600" : "text-slate-500"}`}>Khách hàng</button>
-            <button onClick={() => setActiveTab("payables")} className={`px-6 py-2 rounded-xl text-sm font-bold ${activeTab === "payables" ? "bg-white shadow text-rose-600" : "text-slate-500"}`}>Nhà cung cấp</button>
+      {/* 2. MAIN TABLE AREA */}
+      <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white">
+        <div className="p-6 border-b border-slate-50 flex justify-between items-center">
+          <h3 className="font-black text-slate-800 uppercase tracking-widest text-sm">Danh sách đối tác</h3>
+          <div className="flex p-1.5 bg-slate-100 rounded-2xl shadow-inner">
+            <button onClick={() => setActiveTab("receivables")} className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === "receivables" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-400"}`}>PHẢI THU</button>
+            <button onClick={() => setActiveTab("payables")} className={`px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === "payables" ? "bg-white text-rose-600 shadow-sm" : "text-slate-400"}`}>PHẢI TRẢ</button>
           </div>
         </div>
 
         <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead className="pl-8 py-4 font-bold">ĐỐI TÁC</TableHead>
-              <TableHead className="text-right font-bold">CÔNG NỢ</TableHead>
-              <TableHead className="text-center font-bold">TRẠNG THÁI</TableHead>
-              <TableHead className="text-right pr-8 font-bold">THAO TÁC</TableHead>
+          <TableHeader className="bg-slate-50/50">
+            <TableRow className="border-none">
+              <TableHead className="py-6 pl-10 font-bold text-slate-400">ĐỐI TÁC</TableHead>
+              <TableHead className="text-right font-bold text-slate-400">SỐ DƯ NỢ</TableHead>
+              <TableHead className="text-center font-bold text-slate-400">TÌNH TRẠNG</TableHead>
+              <TableHead className="text-right pr-10 font-bold text-slate-400">HÀNH ĐỘNG</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.map((d) => (
-              <TableRow key={d.id} className="group hover:bg-slate-50 transition-all">
-                <TableCell className="pl-8 py-5">
-                  <div className="font-bold text-slate-800">{d.name}</div>
-                  <div className="text-xs text-slate-400 flex items-center gap-1"><Phone size={12}/> {d.phone}</div>
+              <TableRow key={d.id} className="group hover:bg-slate-50/50 transition-colors border-slate-50">
+                <TableCell className="py-6 pl-10">
+                  <div className="font-black text-slate-700">{d.name}</div>
+                  <div className="text-[11px] text-slate-400 mt-1 font-bold tracking-tighter uppercase">{d.id} • {d.phone}</div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="font-black text-slate-900">{d.amount.toLocaleString()}đ</div>
-                  {d.limit > 0 && (
-                    <div className="w-32 ml-auto bg-slate-100 h-1 rounded-full mt-2 overflow-hidden">
-                      <div className="bg-emerald-500 h-full" style={{ width: `${(d.amount/d.limit)*100}%` }} />
-                    </div>
-                  )}
+                  <div className="font-black text-slate-900 text-lg">{d.amount.toLocaleString()}đ</div>
+                  <div className="text-[10px] text-slate-400 font-bold">HM: {d.limit?.toLocaleString()}đ</div>
                 </TableCell>
                 <TableCell className="text-center">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${d.status === 'Quá hạn' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                  <span className={`px-4 py-1.5 rounded-full text-[10px] font-black border-2 ${
+                    d.status === "Quá hạn" ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                  }`}>
                     {d.status}
                   </span>
                 </TableCell>
-                <TableCell className="text-right pr-8">
-                  <div className="flex justify-end gap-2">
+                <TableCell className="text-right pr-10">
+                  <div className="flex justify-end gap-3">
                     <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="rounded-xl border-emerald-200 text-emerald-600 hover:bg-emerald-50 font-bold"
                       onClick={() => { setSelectedPartner(d); setIsPaymentOpen(true); }}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-100 h-9 px-5"
                     >
-                      <Banknote size={16} className="mr-1" /> Thu nợ
+                      <Banknote size={16} className="mr-2"/> Thu nợ
                     </Button>
-                    <Button variant="ghost" size="sm" className="rounded-xl text-slate-300 hover:text-rose-500" onClick={() => { setSelectedPartner(d); setIsDeleteOpen(true); }}>
-                      <Trash2 size={18}/>
+                    <Button variant="ghost" className="text-slate-300 hover:text-rose-500 transition-colors" onClick={() => { setSelectedPartner(d); setIsDeleteOpen(true); }}>
+                      <Trash2 size={20}/>
                     </Button>
                   </div>
                 </TableCell>
@@ -174,51 +143,68 @@ export default function DebtPage() {
         </Table>
       </Card>
 
-      {/* --- MODAL THANH TOÁN (THU NỢ) --- */}
+      {/* --- MODAL: THỰC HIỆN THU NỢ / TRẢ NỢ --- */}
       <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
-        <DialogContent className="sm:max-w-[400px] rounded-[2rem] p-8">
-          <DialogHeader className="text-center">
-            <div className="mx-auto bg-emerald-100 text-emerald-600 w-16 h-16 rounded-3xl flex items-center justify-center mb-4"><Banknote size={32}/></div>
-            <DialogTitle className="text-2xl font-black text-slate-900">Thu nợ khách hàng</DialogTitle>
-            <DialogDescription className="font-medium">Nhập số tiền {selectedPartner?.name} đã thanh toán.</DialogDescription>
-          </DialogHeader>
-          <div className="py-6 space-y-4">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200 flex justify-between items-center">
-              <span className="text-sm font-bold text-slate-500">Nợ hiện tại:</span>
-              <span className="text-lg font-black text-slate-800">{selectedPartner?.amount.toLocaleString()}đ</span>
+        <DialogContent className="sm:max-w-[420px] rounded-[2.5rem] p-10 border-none shadow-3xl overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-12 bg-emerald-50 rounded-full -mr-16 -mt-16 opacity-50" />
+          
+          <DialogHeader className="relative z-10 space-y-4">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+              <Banknote size={32} />
             </div>
-            <div className="space-y-2">
-              <Label className="font-bold text-xs uppercase tracking-widest text-slate-400">Số tiền thu thực tế</Label>
+            <DialogTitle className="text-2xl font-black text-center text-slate-900 uppercase tracking-tight">Xác nhận thu nợ</DialogTitle>
+            <DialogDescription className="text-center font-medium text-slate-500">
+              Cập nhật số tiền thực tế khách hàng <b>{selectedPartner?.name}</b> đã thanh toán.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-8 space-y-6 relative z-10">
+            <div className="bg-slate-50 p-5 rounded-2xl border border-dashed border-slate-200">
+              <div className="flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
+                <span>Dư nợ hiện tại</span>
+                <span className="text-emerald-600">Đối soát</span>
+              </div>
+              <div className="text-2xl font-black text-slate-800">{selectedPartner?.amount.toLocaleString()}đ</div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="font-black text-[11px] text-slate-400 uppercase ml-1">Số tiền thanh toán (VNĐ)</Label>
               <Input 
                 type="number" 
                 placeholder="Nhập số tiền..." 
-                className="rounded-2xl h-14 text-xl font-bold bg-slate-50 border-none focus:ring-emerald-500"
+                className="rounded-2xl h-14 text-xl font-black bg-slate-50 border-none focus:ring-2 focus:ring-emerald-500 shadow-inner"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
               />
             </div>
           </div>
-          <DialogFooter className="flex gap-3 sm:justify-center">
-            <Button variant="ghost" className="rounded-2xl font-bold h-12 flex-1" onClick={() => setIsPaymentOpen(false)}>Hủy</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl h-12 flex-1 font-black shadow-lg shadow-emerald-100" onClick={handlePayment}>XÁC NHẬN THU</Button>
+
+          <DialogFooter className="relative z-10 sm:justify-center flex gap-3">
+            <Button variant="ghost" className="rounded-2xl font-black h-14 px-8 text-slate-400" onClick={() => setIsPaymentOpen(false)}>HỦY</Button>
+            <Button className="bg-slate-900 hover:bg-emerald-600 text-white rounded-2xl h-14 px-10 font-black shadow-2xl transition-all flex-1" onClick={handlePayment}>
+              XÁC NHẬN THU TIỀN
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* MODAL XÓA (Xác nhận) */}
+      {/* MODAL: XÁC NHẬN XÓA (Giữ nguyên phong cách) */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="sm:max-w-[350px] rounded-[2rem] p-8">
-           <DialogHeader className="text-center">
-             <AlertCircle className="mx-auto text-rose-500 mb-4" size={48} />
-             <DialogTitle className="text-xl font-black">Xóa đối tác này?</DialogTitle>
-           </DialogHeader>
-           <DialogFooter className="mt-4 flex gap-2">
-             <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsDeleteOpen(false)}>Hủy</Button>
-             <Button className="bg-rose-500 flex-1 rounded-xl" onClick={() => {
-               setData(data.filter(i => i.id !== selectedPartner.id));
-               setIsDeleteOpen(false);
-             }}>Xóa</Button>
-           </DialogFooter>
+        <DialogContent className="sm:max-w-[400px] rounded-[2rem] p-8 border-none text-center">
+          <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle size={40} />
+          </div>
+          <DialogTitle className="text-2xl font-black text-slate-900">Gỡ bỏ đối tác?</DialogTitle>
+          <DialogDescription className="text-slate-500 font-medium py-2">
+            Hành động này không thể hoàn tác. Bạn chắc chắn muốn xóa <b>{selectedPartner?.name}</b>?
+          </DialogDescription>
+          <div className="flex gap-4 mt-8">
+            <Button variant="outline" className="flex-1 rounded-2xl font-bold h-12 border-slate-200" onClick={() => setIsDeleteOpen(false)}>QUAY LẠI</Button>
+            <Button className="flex-1 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold h-12 shadow-lg shadow-rose-200" onClick={() => {
+              setData(data.filter(i => i.id !== selectedPartner.id));
+              setIsDeleteOpen(false);
+            }}>XÓA NGAY</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
