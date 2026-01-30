@@ -283,7 +283,7 @@ export default function PosPage() {
             >
               {DEMO_CUSTOMERS.map(c => (
                 <option key={c.id} value={c.id}>
-                  {c.name} {c.debt ? `(Nợ: ${c.debt.toLocaleString()}đ)` : ""}
+                  {c.name} {c.debt ? `(Nợ: ${c.debt.toLocaleString('vi-VN')}đ)` : ""}
                 </option>
               ))}
             </select>
