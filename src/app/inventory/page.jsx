@@ -4,7 +4,7 @@ import { useState } from "react";
 import { 
   Plus, Search, Pencil, Trash2, Package, 
   AlertTriangle, Filter, DollarSign, FileSpreadsheet, 
-  History, MoreHorizontal, Image as ImageIcon 
+  History, Image as ImageIcon 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ const MOCK_PRODUCTS = [
     category: "Vật liệu thô", 
     stock: 150, 
     unit: "Bao", 
-    conversion: "50kg", // Quy đổi
+    conversion: "50kg", 
     cost: 82000, 
     price: 90000 
   },
@@ -82,7 +82,7 @@ export default function InventoryPage() {
   const [products, setProducts] = useState(MOCK_PRODUCTS);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Logic lọc tìm kiếm giả
+  // Logic lọc tìm kiếm
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -102,7 +102,6 @@ export default function InventoryPage() {
           <p className="text-slate-500 mt-1">Quản lý nhập xuất, theo dõi tồn kho và định mức</p>
         </div>
         <div className="flex gap-2">
-            {/* Nút Import/Export gộp chung để ra dáng Chuyển đổi số */}
             <Button variant="outline" className="flex gap-2 text-slate-700 border-slate-300"> 
                 <FileSpreadsheet size={16}/> Excel 
             </Button>
@@ -162,7 +161,7 @@ export default function InventoryPage() {
           <Table>
             <TableHeader className="bg-slate-100/80">
               <TableRow>
-                <TableHead className="w-[60px]"></TableHead> {/* Cột ảnh */}
+                <TableHead className="w-[60px]"></TableHead>
                 <TableHead className="font-semibold text-slate-700">Mã SP</TableHead>
                 <TableHead className="font-semibold text-slate-700">Tên sản phẩm</TableHead>
                 <TableHead className="font-semibold text-slate-700">Danh mục</TableHead>
@@ -175,26 +174,23 @@ export default function InventoryPage() {
             <TableBody>
               {filteredProducts.map((p) => (
                 <TableRow key={p.id} className="hover:bg-slate-50 cursor-pointer group">
-                  {/* 1. Hình ảnh minh họa */}
                   <TableCell>
                     <div className="h-10 w-10 rounded bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
-                       <ImageIcon size={20}/> 
+                        <ImageIcon size={20}/> 
                     </div>
                   </TableCell>
                   
                   <TableCell className="font-medium text-slate-500 text-xs">{p.id}</TableCell>
                   
-                  {/* 2. Tên & Quy đổi (Quan trọng cho VLXD) */}
                   <TableCell>
                     <div className="font-semibold text-slate-800">{p.name}</div>
                     <div className="text-xs text-slate-500 flex items-center gap-2 mt-1">
-                       <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">ĐVT: {p.unit}</span>
-                       {/* Hiển thị quy đổi màu vàng nổi bật */}
-                       {p.conversion && (
-                         <span className="bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded border border-yellow-200 flex items-center gap-1">
-                           🔄 {p.conversion}
-                         </span>
-                       )}
+                        <span className="bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">ĐVT: {p.unit}</span>
+                        {p.conversion && (
+                          <span className="bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded border border-yellow-200 flex items-center gap-1">
+                            🔄 {p.conversion}
+                          </span>
+                        )}
                     </div>
                   </TableCell>
                   
@@ -204,12 +200,11 @@ export default function InventoryPage() {
                     </span>
                   </TableCell>
                   
-                  {/* 3. Trạng thái kho */}
                   <TableCell className="text-center">
                     {p.stock < 10 ? (
                       <div className="flex flex-col items-center">
-                         <span className="font-bold text-red-600">{p.stock}</span>
-                         <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full mt-1">Sắp hết</span>
+                          <span className="font-bold text-red-600">{p.stock}</span>
+                          <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded-full mt-1">Sắp hết</span>
                       </div>
                     ) : (
                       <span className="font-bold text-slate-700">{p.stock}</span>
@@ -219,12 +214,10 @@ export default function InventoryPage() {
                   <TableCell className="text-right text-slate-500">{formatMoney(p.cost)}</TableCell>
                   <TableCell className="text-right font-bold text-slate-900">{formatMoney(p.price)}</TableCell>
                   
-                  {/* 4. Thao tác & Lịch sử (Compliance) */}
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                      {/* Nút Lịch sử (Đáp ứng Thông tư 88 - Thẻ kho) */}
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600 hover:bg-blue-50" title="Xem thẻ kho">
-                         <History size={16} />
+                          <History size={16} />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-orange-600 hover:bg-orange-50">
                         <Pencil size={16} />
