@@ -7,3 +7,9 @@ export const INITIAL_PRODUCTS = [
   { id: 5, name: "Sơn Dulux Trắng", price: 1850000, cost: 1600000, stock: 12, unit: "Thùng 18L", category: "Sơn nước", image: "🎨" },
   { id: 6, name: "Đá 1x2 (Xe)", price: 2500000, cost: 2200000, stock: 3, unit: "Xe 5m3", category: "Vật liệu thô", image: "🪨" },
 ];
+export const MOCK_SUBSCRIPTIONS = [
+  { id: 1, plan_name: "Gói Dùng Thử", price: 0, duration: 30, description: "Dành cho người mới bắt đầu" },
+  { id: 2, plan_name: "Gói Cơ Bản", price: 199000, duration: 30, description: "Đầy đủ tính năng bán hàng" },
+  { id: 3, plan_name: "Gói Chuyên Nghiệp", price: 499000, duration: 365, description: "Tiết kiệm hơn, hỗ trợ 24/7" },
+  { id: 4, plan_name: "Gói Doanh Nghiệp", price: 1200000, duration: 365, description: "Không giới hạn nhân viên" }
+];

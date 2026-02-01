@@ -50,7 +50,7 @@ export function TopBar() {
 
           <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-slate-700 leading-none">Admin Nhóm 7</p>
+              
               <p className="text-[11px] text-slate-500 font-medium mt-1">Quản trị viên</p>
             </div>
             <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-blue-500 transition-all">

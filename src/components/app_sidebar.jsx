@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { 
-  LayoutDashboard, ShoppingCart, Package, Users, FileText, LogOut, ShieldCheck
+  LayoutDashboard, ShoppingCart, Package, Users, FileText, LogOut, ShieldCheck, CreditCard,BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,10 @@ const MENU_ITEMS = [
   { title: "Báo cáo doanh thu", icon: FileText, href: "/reports", roles: ["owner", "admin"] },
   { title: "Quản trị hệ thống", icon: ShieldCheck, href: "/admin", roles: ["admin"] },
   { title: "Trợ lý AI", icon: Sparkles, href: "/ai", roles: ["owner", "employee"] },
+  { title: "Quản lý Gói cước", icon: CreditCard, href: "/admin/subscription", roles: ["admin"] },
+  
 ];
+
 
 export function AppSidebar() {
   const path_name = usePathname();
