@@ -1,24 +1,19 @@
-// src/lib/api_service.js
-const BASE_URL = "http://localhost:9999";
+// File: src/lib/api_service.js
+const BASE_URL = "http://localhost:9999"; // Đảm bảo trùng port với server Python
 
 export const api_service = {
-  // 1. Đăng nhập
+  // 1. Logic Đăng nhập (Của bạn)
   login: async (email, password, role) => {
     try {
       const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // SỬA: Gửi role trong body
         body: JSON.stringify({ email, password, role }),
       });
-      
       const data = await res.json();
-      
       if (res.ok && data.token) {
         localStorage.setItem("token", data.token);
-        // Lưu role server trả về để chắc chắn
-        const userRole = data.user?.role || role; 
-        localStorage.setItem("role", userRole);
+        localStorage.setItem("role", data.user?.role || role);
         localStorage.setItem("user_name", data.user?.name || "User");
       }
       return data;
@@ -28,43 +23,33 @@ export const api_service = {
     }
   },
 
-  // 2. Lấy danh sách sản phẩm
+  // 2. Logic lấy sản phẩm (Của nhánh feature-d)
   get_products: async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return []; // Nếu không có token thì trả về rỗng luôn để tránh lỗi 401
-
-      // SỬA: Thêm /api và bỏ dấu / ở cuối để Flask tự xử lý redirect
-      const res = await fetch(`${BASE_URL}/api/products`, {
+      if (!token) return [];
+      const res = await fetch(`${BASE_URL}/api/products`, { // Endpoint khớp với Backend
         method: "GET",
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
         }
       });
-
-      if (!res.ok) {
-        // In ra lỗi cụ thể từ server nếu có
-        const errorData = await res.json().catch(() => ({}));
-        console.error("Server Error:", errorData);
-        throw new Error(`Lỗi ${res.status}: Không lấy được dữ liệu sản phẩm`);
-      }
-      
+      if (!res.ok) throw new Error(`Lỗi ${res.status}`);
       return await res.json();
     } catch (error) {
       console.error("Lỗi get_products:", error);
       return [];
     }
   },
-  
-  // 3. Tạo đơn hàng
+
+  // 3. Logic tạo đơn hàng (Của nhánh feature-d)
   create_order: async (order_data) => {
     try {
       const token = localStorage.getItem("token");
-      // SỬA: Thêm /api
       const res = await fetch(`${BASE_URL}/api/orders`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
@@ -74,22 +59,6 @@ export const api_service = {
     } catch (error) {
         console.error(error);
         return { error: "Lỗi tạo đơn" };
-    }
-  },
-
-  // 4. Lấy danh mục
-  get_categories: async () => {
-    try {
-      const token = localStorage.getItem("token");
-      // Đường dẫn này đã đúng (/api/categories) nhưng thêm token cho chắc
-      const res = await fetch(`${BASE_URL}/api/categories`, {
-         headers: { "Authorization": `Bearer ${token}` }
-      }); 
-      if (!res.ok) return [];
-      return await res.json();
-    } catch (error) {
-      console.error(error);
-      return [];
     }
   }
 };
