@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"; 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Sparkles } from "lucide-react";
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, FileText, LogOut, ShieldCheck
 } from "lucide-react";
@@ -15,6 +16,7 @@ const MENU_ITEMS = [
   { title: "Đối tác & Công nợ", icon: Users, href: "/debt", roles: ["owner"] },
   { title: "Báo cáo doanh thu", icon: FileText, href: "/reports", roles: ["owner", "admin"] },
   { title: "Quản trị hệ thống", icon: ShieldCheck, href: "/admin", roles: ["admin"] },
+  { title: "Trợ lý AI", icon: Sparkles, href: "/ai", roles: ["owner", "admin"] },
 ];
 
 export function AppSidebar() {
