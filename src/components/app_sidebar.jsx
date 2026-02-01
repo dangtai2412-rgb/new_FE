@@ -15,10 +15,13 @@ const MENU_ITEMS = [
   { title: "Kho & Sản phẩm", icon: Package, href: "/inventory", roles: ["owner", "employee"] },
   { title: "Đối tác & Công nợ", icon: Users, href: "/debt", roles: ["owner"] },
   { title: "Báo cáo doanh thu", icon: FileText, href: "/reports", roles: ["owner", "admin"] },
-  { title: "Quản trị hệ thống", icon: ShieldCheck, href: "/admin", roles: ["admin"] },
   { title: "Trợ lý AI", icon: Sparkles, href: "/ai", roles: ["owner", "employee"] },
-  { title: "Quản lý Gói cước", icon: CreditCard, href: "/admin/subscription", roles: ["admin"] },
-  
+  { 
+    title: "Quản trị hệ thống", 
+    icon: ShieldCheck, 
+    href: "/subscription", // <-- QUAN TRỌNG: Đường dẫn này phải khớp với file src/app/subscription/page.jsx
+    roles: ["admin"] 
+  },
 ];
 
 
