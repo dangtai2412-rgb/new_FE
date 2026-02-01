@@ -5,6 +5,7 @@ import { TopBar } from "@/components/top_bar"; // Import component mới nè
 
 const inter = Inter({ subsets: ["latin"] });
 
+
 export const metadata = {
   title: "BizFlow - Nền tảng Hộ kinh doanh",
   description: "Hỗ trợ chuyển đổi số theo thông tư 88",
