@@ -62,3 +62,34 @@ export const api_service = {
     }
   }
 };
+  delete_product: async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/products/${id}`, { // Backend phải có route này
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      return res.ok; // Trả về true nếu xóa thành công
+    } catch (error) {
+      console.error("Lỗi xóa SP:", error);
+      return false;
+    }
+  };
+
+  // 2. Thêm hàm tạo sản phẩm mới
+  create_product: async (productData) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${BASE_URL}/api/products`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(productData)
+      });
+      return await res.json();
+    } catch (error) {
+      return null;
+    }
+  };

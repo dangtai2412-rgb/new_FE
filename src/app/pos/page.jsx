@@ -1,5 +1,5 @@
 "use client";
-
+import { INITIAL_PRODUCTS } from "@/lib/mock_data";
 import React, { useState, useEffect } from "react";
 import { api_service } from "@/lib/api_service";
 import { 
@@ -100,7 +100,7 @@ const CATEGORIES = [
 ];
 
 export default function PosPage() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(INITIAL_PRODUCTS);
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
