@@ -16,7 +16,7 @@ const MENU_ITEMS = [
   { title: "Đối tác & Công nợ", icon: Users, href: "/debt", roles: ["owner"] },
   { title: "Báo cáo doanh thu", icon: FileText, href: "/reports", roles: ["owner", "admin"] },
   { title: "Quản trị hệ thống", icon: ShieldCheck, href: "/admin", roles: ["admin"] },
-  { title: "Trợ lý AI", icon: Sparkles, href: "/ai", roles: ["owner", "admin"] },
+  { title: "Trợ lý AI", icon: Sparkles, href: "/ai", roles: ["owner", "employee"] },
 ];
 
 export function AppSidebar() {
