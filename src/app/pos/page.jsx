@@ -272,7 +272,7 @@ export default function PosPage() {
                         </h3>
                         <div className="mt-3 flex justify-between items-end border-t border-slate-100 pt-2">
                           <span className="text-blue-700 font-bold text-sm">
-                            {product.price.toLocaleString()}đ
+                            {product.price?.toLocaleString('vi-VN')}đ
                           </span>
                           <div className="bg-blue-100 text-blue-600 p-1 rounded-md hover:bg-blue-600 hover:text-white transition-colors">
                             <Plus size={16} />
@@ -320,7 +320,7 @@ export default function PosPage() {
             >
               {DEMO_CUSTOMERS.map(c => (
                 <option key={c.id} value={c.id}>
-                  {c.name} {c.debt > 0 ? `(Nợ: ${c.debt.toLocaleString()})` : ""}
+                  {c.name} {c.debt ? `(Nợ: ${c.debt.toLocaleString('vi-VN')}đ)` : ""}
                 </option>
               ))}
             </select>
@@ -381,17 +381,17 @@ export default function PosPage() {
           <div className="space-y-1">
             <div className="flex justify-between text-slate-500 text-sm">
               <span>Tạm tính:</span>
-              <span>{totalAmount.toLocaleString()}đ</span>
+              <span>{totalAmount.toLocaleString('vi-VN')}đ</span>
             </div>
             {isVatInvoice && (
               <div className="flex justify-between text-orange-500 text-sm">
                 <span>VAT (8%):</span>
-                <span>+{vatAmount.toLocaleString()}đ</span>
+                <span>+{vatAmount.toLocaleString('vi-VN')}đ</span>
               </div>
             )}
             <div className="flex justify-between items-end border-t border-dashed pt-2 mt-2">
               <span className="text-slate-800 font-bold">KHÁCH PHẢI TRẢ</span>
-              <span className="text-2xl font-extrabold text-blue-700">{finalAmount.toLocaleString()}đ</span>
+              <span className="text-2xl font-extrabold text-blue-700">{finalAmount.toLocaleString('vi-VN')}đ</span>
             </div>
           </div>
 
