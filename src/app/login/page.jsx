@@ -3,68 +3,123 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api_service } from "@/lib/api_service";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Lock, Loader2 } from "lucide-react";
+
+import { 
+  Mail, 
+  Lock, 
+  Loader2, 
+  Eye, 
+  EyeOff, 
+  CheckCircle 
+} from "lucide-react";
 
 export default function LoginPage() {
 
-  // ===== State form =====
+  /* =====================
+     FORM STATE
+  ===================== */
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ===== State UI =====
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
+
+  /* =====================
+     UI STATE
+  ===================== */
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const router = useRouter();
 
-  // ===== Submit handler =====
-  const handle_submit = async (e) => {
-    e.preventDefault();
-    setError("");
+  /* =====================
+     VALIDATION
+  ===================== */
 
-    /* --- Validate chi tiết --- */
+  const validateForm = () => {
 
-    if (!email.includes("@")) {
-      setError("Email không hợp lệ");
-      return;
+    if (!email) {
+      return "Vui lòng nhập email";
+    }
+
+    if (!email.match(/^\S+@\S+\.\S+$/)) {
+      return "Email không đúng định dạng";
+    }
+
+    if (!password) {
+      return "Vui lòng nhập mật khẩu";
     }
 
     if (password.length < 4) {
-      setError("Mật khẩu phải từ 4 ký tự trở lên");
+      return "Mật khẩu tối thiểu 4 ký tự";
+    }
+
+    return "";
+  };
+
+  /* =====================
+     SUBMIT
+  ===================== */
+
+  const handle_submit = async (e) => {
+    e.preventDefault();
+
+    setError("");
+    setSuccess("");
+
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
-    /* --- Call API --- */
     setLoading(true);
 
     try {
+
       const data = await api_service.login(email, password);
 
       if (data?.token) {
 
-        // Lưu token (để dùng sau)
-        localStorage.setItem("token", data.token);
+        if (remember) {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("remember", "true");
+        } else {
+          sessionStorage.setItem("token", data.token);
+        }
 
-        router.push("/dashboard");
+        setSuccess("Đăng nhập thành công! Đang chuyển trang...");
+
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 1000);
 
       } else {
         setError(data?.error || "Sai tài khoản hoặc mật khẩu");
       }
 
-    } catch (err) {
+    } catch {
       setError("Không kết nối được server");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-100 to-slate-100">
+  /* =====================
+     UI
+  ===================== */
 
-      <Card className="w-[380px] shadow-2xl rounded-2xl">
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-100 via-white to-slate-100">
+
+      <Card className="w-[420px] shadow-2xl rounded-2xl animate-fade-in">
 
         {/* ===== HEADER ===== */}
         <CardHeader className="text-center space-y-2">
@@ -74,7 +129,7 @@ export default function LoginPage() {
           </CardTitle>
 
           <p className="text-slate-500 text-sm">
-            Hệ thống quản lý doanh nghiệp
+            Đăng nhập hệ thống quản lý doanh nghiệp
           </p>
 
         </CardHeader>
@@ -90,7 +145,7 @@ export default function LoginPage() {
             {/* ===== EMAIL ===== */}
             <div className="space-y-1">
 
-              <label className="text-sm text-slate-600">
+              <label className="text-sm font-medium text-slate-600">
                 Email
               </label>
 
@@ -115,7 +170,7 @@ export default function LoginPage() {
             {/* ===== PASSWORD ===== */}
             <div className="space-y-1">
 
-              <label className="text-sm text-slate-600">
+              <label className="text-sm font-medium text-slate-600">
                 Mật khẩu
               </label>
 
@@ -127,21 +182,58 @@ export default function LoginPage() {
                 />
 
                 <Input
-                  className="pl-10"
-                  type="password"
+                  className="pl-10 pr-10"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                 />
 
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                </button>
+
               </div>
+
+            </div>
+
+            {/* ===== OPTIONS ===== */}
+            <div className="flex justify-between items-center text-sm">
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={() => setRemember(!remember)}
+                />
+                Nhớ đăng nhập
+              </label>
+
+              <a 
+                href="#" 
+                className="text-blue-600 hover:underline"
+              >
+                Quên mật khẩu?
+              </a>
 
             </div>
 
             {/* ===== ERROR ===== */}
             {error && (
-              <div className="bg-red-100 text-red-600 text-sm px-3 py-2 rounded-lg">
+              <div className="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm">
                 {error}
+              </div>
+            )}
+
+            {/* ===== SUCCESS ===== */}
+            {success && (
+              <div className="bg-green-100 text-green-600 px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+                <CheckCircle size={16}/>
+                {success}
               </div>
             )}
 
@@ -156,9 +248,35 @@ export default function LoginPage() {
 
           </form>
 
+          {/* ===== DIVIDER ===== */}
+          <div className="my-6 flex items-center gap-3 text-slate-400 text-xs">
+            <div className="flex-1 h-px bg-slate-200"></div>
+            Hoặc
+            <div className="flex-1 h-px bg-slate-200"></div>
+          </div>
+
+          {/* ===== SOCIAL LOGIN (FAKE) ===== */}
+          <div className="space-y-3">
+
+            <Button 
+              variant="outline" 
+              className="w-full"
+            >
+              Đăng nhập với Google
+            </Button>
+
+            <Button 
+              variant="outline" 
+              className="w-full"
+            >
+              Đăng nhập với Facebook
+            </Button>
+
+          </div>
+
           {/* ===== FOOTER ===== */}
-          <div className="mt-5 text-center text-xs text-slate-400">
-            © 2026 BizFlow System
+          <div className="mt-6 text-center text-xs text-slate-400">
+            © 2026 BizFlow System · All rights reserved
           </div>
 
         </CardContent>
