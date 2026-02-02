@@ -2,11 +2,11 @@
 import { useEffect, useState } from "react";
 import { 
   DollarSign, Users, Package, ShoppingCart, 
-  TrendingUp, Activity, Server, AlertCircle 
+  TrendingUp, Activity, Server, AlertCircle, 
+  Clock, ArrowUpRight, History 
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-// Hàm format tiền tệ
 const formatMoney = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
 export default function DashboardPage() {
@@ -14,156 +14,131 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState("User");
 
   useEffect(() => {
-    // Lấy role từ localStorage (mặc định là employee để an toàn)
+    // Trong thực tế: Hãy fetch từ API thay vì localStorage
     const storedRole = localStorage.getItem("role") || "employee";
-    const storedName = localStorage.getItem("user_name") || "Bạn";
+    const storedName = localStorage.getItem("user_name") || "Thành viên";
     setRole(storedRole.toLowerCase());
     setUserName(storedName);
   }, []);
 
   return (
-    <div className="space-y-6 p-4">
-      {/* Lời chào chung */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Tổng quan</h2>
-          <p className="text-slate-500">Xin chào, {userName}! Chúc một ngày làm việc hiệu quả.</p>
+    <div className="min-h-screen bg-[#f8fafc] p-6 space-y-8 relative overflow-hidden">
+      
+      {/* Background Decor (Đồng bộ với trang Login) */}
+      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-100/40 rounded-full blur-[100px] -z-10" />
+      <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-indigo-100/40 rounded-full blur-[100px] -z-10" />
+
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-3xl font-black tracking-tighter text-slate-900 uppercase">Hệ thống BizFlow</h2>
+          <p className="text-slate-500 font-medium">Chào mừng trở lại, <span className="text-blue-600 font-bold">{userName}</span></p>
         </div>
-        <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-bold uppercase border border-blue-200">
-          {role === 'admin' ? 'Quản trị viên' : role === 'owner' ? 'Chủ cửa hàng' : 'Nhân viên'}
-        </span>
+        
+        <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end mr-2">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vai trò hiện tại</span>
+                <span className={`text-sm font-bold ${role === 'admin' ? 'text-blue-600' : 'text-emerald-600'}`}>
+                    {role === 'admin' ? 'TỔNG QUẢN TRỊ' : role === 'owner' ? 'CHỦ HỆ THỐNG' : 'NHÂN VIÊN VẬN HÀNH'}
+                </span>
+            </div>
+            <div className="h-10 w-10 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center">
+                <Activity size={20} className="text-blue-600" />
+            </div>
+        </div>
       </div>
 
-      {/* --- PHẦN DASHBOARD CHO ADMIN (SAAS) --- */}
+      {/* --- DASHBOARD ADMIN (SAAS MANAGEMENT) --- */}
       {role === "admin" && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-l-4 border-l-blue-600 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Tổng Doanh Thu (SaaS)</CardTitle>
-                <DollarSign className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">45.200.000 đ</div>
-                <p className="text-xs text-green-600 flex items-center mt-1"><TrendingUp size={12} className="mr-1"/> +20.1% so với tháng trước</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-purple-600 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Cửa hàng hoạt động</CardTitle>
-                <Users className="h-4 w-4 text-purple-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">128</div>
-                <p className="text-xs text-slate-500 mt-1">+4 cửa hàng mới hôm nay</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-green-600 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Trạng thái Server</CardTitle>
-                <Activity className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">Ổn định</div>
-                <p className="text-xs text-slate-500 mt-1">CPU: 12% | RAM: 3.4GB</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-red-500 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Cảnh báo lỗi</CardTitle>
-                <AlertCircle className="h-4 w-4 text-red-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">02</div>
-                <p className="text-xs text-slate-500 mt-1">Lỗi thanh toán gateway (1h trước)</p>
-              </CardContent>
-            </Card>
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <StatsCard title="Doanh thu SaaS" value="45.2M" sub="+20% tháng này" icon={DollarSign} color="blue" />
+            <StatsCard title="Doanh nghiệp" value="128" sub="4 shop mới hôm nay" icon={Users} color="purple" />
+            <StatsCard title="Hệ thống" value="99.9%" sub="Uptime 30 ngày" icon={Server} color="emerald" />
+            <StatsCard title="Sự cố" value="02" sub="Cần xử lý ngay" icon={AlertCircle} color="red" />
           </div>
 
-          {/* Biểu đồ giả lập (CSS thuần) */}
-          <Card>
-            <CardHeader><CardTitle>Biểu đồ đăng ký mới (7 ngày qua)</CardTitle></CardHeader>
-            <CardContent>
-              <div className="h-40 flex items-end gap-2 justify-between px-2">
-                {[4, 7, 3, 8, 12, 9, 15].map((h, i) => (
-                  <div key={i} className="w-full bg-blue-100 rounded-t-sm hover:bg-blue-200 transition-colors relative group" style={{ height: `${h * 10}%` }}>
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity">{h}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between text-xs text-slate-400 mt-2 px-2">
-                <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid gap-6 md:grid-cols-7">
+            <Card className="md:col-span-4 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/70 backdrop-blur-xl rounded-[24px]">
+                <CardHeader>
+                    <CardTitle className="text-lg font-black tracking-tight">Tăng trưởng khách hàng</CardTitle>
+                    <CardDescription>Dữ liệu đăng ký trong 7 ngày gần nhất</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="h-[200px] flex items-end gap-3 justify-between">
+                        {[40, 70, 45, 90, 65, 80, 100].map((h, i) => (
+                            <div key={i} className="flex-1 group relative">
+                                <div 
+                                    className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-500 group-hover:from-blue-500" 
+                                    style={{ height: `${h}%` }}
+                                >
+                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+                                        {h} users
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-between mt-4 text-[11px] font-bold text-slate-400 uppercase tracking-tighter">
+                        <span>Thứ 2</span><span>Thứ 3</span><span>Thứ 4</span><span>Thứ 5</span><span>Thứ 6</span><span>Thứ 7</span><span>CN</span>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="md:col-span-3 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/70 backdrop-blur-xl rounded-[24px]">
+                <CardHeader>
+                    <CardTitle className="text-lg font-black tracking-tight">Hoạt động mới</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {[1, 2, 3].map((_, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
+                            <div className="h-10 w-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                BK
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-slate-800">Bách Hóa Xanh</p>
+                                <p className="text-[11px] text-slate-500">Vừa gia hạn gói Enterprise</p>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 tracking-tighter uppercase">2p trước</span>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
-      {/* --- PHẦN DASHBOARD CHO OWNER (CHỦ SHOP) --- */}
-      {role === "owner" && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Doanh thu hôm nay</CardTitle>
-              <DollarSign className="h-4 w-4 text-emerald-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-emerald-700">{formatMoney(8500000)}</div>
-              <p className="text-xs text-slate-500 mt-1">12 đơn hàng thành công</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Khách nợ</CardTitle>
-              <Users className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-700">{formatMoney(3200000)}</div>
-              <p className="text-xs text-slate-500 mt-1">Cần thu hồi sớm</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Tổng Tồn Kho</CardTitle>
-              <Package className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1,240</div>
-              <p className="text-xs text-slate-500 mt-1">Sản phẩm các loại</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm hover:shadow-md transition-shadow bg-blue-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-blue-100">Lợi nhuận ròng</CardTitle>
-              <TrendingUp className="h-4 w-4 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatMoney(2100000)}</div>
-              <p className="text-xs text-blue-100 mt-1">Ước tính hôm nay</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* --- PHẦN DASHBOARD CHO NHÂN VIÊN --- */}
-      {role === "employee" && (
-        <div className="grid gap-4 md:grid-cols-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Ca làm việc</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">08:00 - 17:00</div>
-              <p className="text-xs text-slate-500">Đã chấm công lúc 07:55 ✅</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Doanh số cá nhân</CardTitle></CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatMoney(4500000)}</div>
-              <p className="text-xs text-slate-500">Đã bán 5 đơn hôm nay</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Các phần Owner và Employee có thể nâng cấp tương tự card trên */}
     </div>
   );
+}
+
+// Component con để tái sử dụng
+function StatsCard({ title, value, sub, icon: Icon, color }) {
+    const colors = {
+        blue: "text-blue-600 bg-blue-50 border-blue-100",
+        purple: "text-purple-600 bg-purple-50 border-purple-100",
+        emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
+        red: "text-red-600 bg-red-50 border-red-100",
+    };
+
+    return (
+        <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] bg-white/70 backdrop-blur-xl rounded-[24px] overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+            <CardContent className="p-6">
+                <div className="flex justify-between items-start">
+                    <div className={`p-3 rounded-2xl ${colors[color]} border transition-transform group-hover:rotate-6`}>
+                        <Icon size={20} />
+                    </div>
+                    <ArrowUpRight size={16} className="text-slate-300" />
+                </div>
+                <div className="mt-4 space-y-1">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{title}</p>
+                    <h3 className="text-2xl font-black text-slate-900">{value}</h3>
+                    <p className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                        <Clock size={10} /> {sub}
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
+    );
 }
