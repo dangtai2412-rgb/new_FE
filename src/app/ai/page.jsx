@@ -1,68 +1,49 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Sparkles } from "lucide-react";
+import { Send, Bot, User, Sparkles, Trash2, Command, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { INITIAL_PRODUCTS } from "@/lib/mock_data"; // Đọc đúng dữ liệu kho của bạn
+import { INITIAL_PRODUCTS } from "@/lib/mock_data";
 
 export default function AIPage() {
   const [messages, setMessages] = useState([
-    { role: "ai", content: "Chào bạn! Tôi là trợ lý ảo BizFlow. Tôi có thể giúp bạn kiểm tra kho hàng, tra cứu giá cả hoặc tính toán đơn hàng. Bạn cần giúp gì không?" }
+    { role: "ai", content: "Chào bạn! Tôi là trí tuệ nhân tạo BizFlow. Tôi đã kết nối với kho dữ liệu thời gian thực của bạn. Bạn muốn kiểm tra doanh thu, tồn kho hay tra cứu mã hàng?" }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef(null);
 
-  // Auto scroll xuống cuối khi có tin nhắn mới
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  // --- LOGIC "AI" TỰ CHẾ (Rất hiệu quả để demo) ---
   const generateResponse = (query) => {
     const lowerQuery = query.toLowerCase();
-    
-    // 1. Lấy dữ liệu mới nhất (từ localStorage nếu có, không thì dùng mặc định)
     let products = INITIAL_PRODUCTS;
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("bizflow_products");
       if (saved) products = JSON.parse(saved);
     }
 
-    // 2. Kịch bản trả lời
-    if (lowerQuery.includes("xin chào") || lowerQuery.includes("hi")) {
-      return "Chào chủ shop! Chúc bạn một ngày buôn may bán đắt. Cần kiểm tra kho cứ bảo tôi nhé!";
-    }
-
-    if (lowerQuery.includes("tổng") && (lowerQuery.includes("sản phẩm") || lowerQuery.includes("mặt hàng"))) {
-      return `Hiện tại trong kho đang có tổng cộng **${products.length}** mặt hàng khác nhau.`;
-    }
-
+    if (lowerQuery.includes("xin chào") || lowerQuery.includes("hi")) return "Chào chủ shop! Tôi đã sẵn sàng hỗ trợ bạn quản lý vận hành. Hôm nay chúng ta bắt đầu từ đâu?";
+    if (lowerQuery.includes("tổng") && (lowerQuery.includes("sản phẩm") || lowerQuery.includes("mặt hàng"))) return `Hệ thống ghi nhận tổng cộng **${products.length}** danh mục hàng hóa đang lưu kho.`;
+    
     if (lowerQuery.includes("sắp hết") || lowerQuery.includes("cần nhập")) {
       const lowStock = products.filter(p => p.stock < 10);
-      if (lowStock.length === 0) return "Tuyệt vời! Không có sản phẩm nào sắp hết hàng.";
-      return `Cảnh báo! Có **${lowStock.length}** sản phẩm sắp hết hàng cần nhập thêm: \n` + 
-             lowStock.map(p => `- ${p.name} (còn ${p.stock} ${p.unit})`).join("\n");
+      if (lowStock.length === 0) return "✅ Trạng thái kho hàng đang rất an toàn. Không có mặt hàng nào dưới ngưỡng tối thiểu.";
+      return `⚠️ **Cảnh báo tồn kho thấp:**\n` + lowStock.map(p => `• ${p.name}: còn ${p.stock} ${p.unit}`).join("\n") + `\n\nBạn có muốn tạo đơn nhập hàng nhanh không?`;
     }
 
-    // 3. Tìm kiếm sản phẩm cụ thể (Thông minh nhất)
-    // Ví dụ user hỏi: "Giá xi măng bao nhiêu?"
-    const foundProduct = products.find(p => lowerQuery.includes(p.name.toLowerCase()) || (lowerQuery.includes("xi măng") && p.name.toLowerCase().includes("xi măng")));
-    
+    const foundProduct = products.find(p => lowerQuery.includes(p.name.toLowerCase()));
     if (foundProduct) {
-      if (lowerQuery.includes("giá") || lowerQuery.includes("bao nhiêu")) {
-        return `Sản phẩm **${foundProduct.name}** đang có giá bán là **${foundProduct.price.toLocaleString()}đ**/${foundProduct.unit}. (Giá vốn: ${foundProduct.cost.toLocaleString()}đ)`;
-      }
-      if (lowerQuery.includes("còn") || lowerQuery.includes("tồn") || lowerQuery.includes("số lượng")) {
-        return `Trong kho hiện còn **${foundProduct.stock} ${foundProduct.unit}** sản phẩm **${foundProduct.name}**.`;
-      }
-      return `Thông tin **${foundProduct.name}**: \n- Giá bán: ${foundProduct.price.toLocaleString()}đ \n- Tồn kho: ${foundProduct.stock}`;
+      if (lowerQuery.includes("giá")) return `💰 **${foundProduct.name}**\n- Giá bán: **${foundProduct.price.toLocaleString()}đ**\n- Lợi nhuận gộp: ${(foundProduct.price - foundProduct.cost).toLocaleString()}đ`;
+      return `📦 **${foundProduct.name}**\n- Tồn kho: ${foundProduct.stock} ${foundProduct.unit}\n- Trạng thái: ${foundProduct.stock > 0 ? "Còn hàng" : "Hết hàng"}`;
     }
 
-    return "Xin lỗi, tôi chưa hiểu ý bạn hoặc không tìm thấy tên sản phẩm trong câu hỏi. Bạn thử hỏi cụ thể tên món hàng xem (ví dụ: 'Xi măng giá bao nhiêu?')";
+    return "Tôi chưa tìm thấy thông tin cụ thể về yêu cầu này. Bạn có thể thử hỏi: 'Sản phẩm nào sắp hết hàng?' hoặc 'Giá của [Tên sản phẩm]'.";
   };
 
   const handleSend = async () => {
@@ -72,55 +53,113 @@ export default function AIPage() {
     setInput("");
     setIsTyping(true);
 
-    // Giả vờ suy nghĩ 1 giây cho giống thật
     setTimeout(() => {
       const aiResponse = generateResponse(userMsg.content);
       setMessages(prev => [...prev, { role: "ai", content: aiResponse }]);
       setIsTyping(false);
-    }, 1000);
+    }, 1200);
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] p-4 max-w-4xl mx-auto">
-      <div className="bg-white p-4 rounded-t-xl border-b flex items-center gap-3 shadow-sm">
-        <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg">
-          <Sparkles size={20} />
+    <div className="flex flex-col h-[calc(100vh-2rem)] max-w-5xl mx-auto p-2 md:p-6 space-y-4">
+      
+      {/* HEADER GỌN GÀNG & HIỆN ĐẠI */}
+      <div className="flex items-center justify-between bg-white/80 backdrop-blur-md p-4 rounded-[24px] border border-slate-200 shadow-sm px-6">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute inset-0 bg-blue-500 blur-lg opacity-20 animate-pulse" />
+            <div className="relative w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-blue-400 shadow-xl border border-white/10">
+              <Sparkles size={24} />
+            </div>
+          </div>
+          <div>
+            <h2 className="font-black text-slate-900 tracking-tight">BizFlow Intelligence</h2>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Neural Engine Active</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <h2 className="font-bold text-lg text-slate-800">Trợ lý ảo AI BizFlow</h2>
-          <p className="text-xs text-green-600 flex items-center gap-1">● Đang hoạt động (Demo Mode)</p>
-        </div>
+        <Button variant="ghost" size="icon" className="rounded-xl text-slate-400 hover:text-red-500" onClick={() => setMessages([messages[0]])}>
+          <Trash2 size={20} />
+        </Button>
       </div>
 
-      <Card className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50" ref={scrollRef}>
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === "ai" ? "bg-blue-100 text-blue-600" : "bg-slate-200 text-slate-600"}`}>
-              {msg.role === "ai" ? <Bot size={18} /> : <User size={18} />}
+      {/* KHUNG CHAT SANG TRỌNG */}
+      <Card className="flex-1 overflow-hidden flex flex-col border-none bg-slate-50/50 rounded-[32px] shadow-inner relative">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scroll-smooth" ref={scrollRef}>
+          {messages.map((msg, idx) => (
+            <div key={idx} className={`flex gap-4 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border ${
+                msg.role === "ai" 
+                ? "bg-white text-blue-600 border-slate-100" 
+                : "bg-slate-900 text-white border-slate-800"
+              }`}>
+                {msg.role === "ai" ? <Bot size={20} /> : <User size={20} />}
+              </div>
+              <div className={`group relative p-4 px-6 rounded-[24px] max-w-[85%] md:max-w-[70%] text-sm leading-relaxed shadow-sm transition-all ${
+                msg.role === "ai" 
+                ? "bg-white text-slate-700 rounded-tl-none border border-white" 
+                : "bg-blue-600 text-white rounded-tr-none"
+              }`}>
+                <div className="whitespace-pre-line font-medium">
+                  {msg.content}
+                </div>
+                <span className={`text-[10px] mt-2 block opacity-0 group-hover:opacity-50 transition-opacity ${msg.role === "user" ? "text-right" : ""}`}>
+                  {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
             </div>
-            <div className={`p-4 rounded-2xl max-w-[80%] text-sm leading-relaxed shadow-sm ${msg.role === "ai" ? "bg-white text-slate-800 rounded-tl-none border border-slate-100" : "bg-blue-600 text-white rounded-tr-none"}`}>
-              {msg.content.split('\n').map((line, i) => <div key={i}>{line}</div>)}
+          ))}
+          {isTyping && (
+            <div className="flex gap-4 animate-in fade-in duration-300">
+              <div className="w-10 h-10 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-sm">
+                <Bot size={20} className="text-blue-600 animate-bounce"/>
+              </div>
+              <div className="bg-white/50 backdrop-blur-sm p-4 px-6 rounded-[24px] rounded-tl-none flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* INPUT AREA: FOCUS TRẢI NGHIỆM */}
+        <div className="p-4 md:p-6 bg-white/80 backdrop-blur-xl border-t border-slate-100">
+          <div className="relative max-w-3xl mx-auto group">
+            <div className="absolute inset-0 bg-blue-500/5 rounded-[20px] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
+            <div className="relative flex items-center gap-2 bg-slate-100/50 p-2 rounded-[22px] border border-slate-200 focus-within:border-blue-400/50 focus-within:bg-white transition-all">
+              <div className="pl-3 text-slate-400">
+                <Command size={18} />
+              </div>
+              <Input 
+                value={input} 
+                onChange={(e) => setInput(e.target.value)} 
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                placeholder="Hỏi về giá, kho hàng, hoặc báo cáo..." 
+                className="border-none bg-transparent shadow-none focus-visible:ring-0 text-slate-700 font-medium placeholder:text-slate-400"
+              />
+              <Button 
+                onClick={handleSend} 
+                disabled={!input.trim() || isTyping}
+                className={`rounded-[16px] w-12 h-12 p-0 transition-all ${
+                  input.trim() ? "bg-blue-600 shadow-blue-200 shadow-lg scale-100" : "bg-slate-300 scale-95"
+                }`}
+              >
+                <Zap size={20} fill={input.trim() ? "currentColor" : "none"} />
+              </Button>
             </div>
           </div>
-        ))}
-        {isTyping && (
-          <div className="flex gap-4">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center"><Bot size={18} className="text-blue-600 animate-pulse"/></div>
-            <div className="bg-white p-4 rounded-2xl rounded-tl-none text-slate-400 text-xs italic flex items-center">Đang suy nghĩ...</div>
+          <div className="mt-3 flex justify-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <span>Inventory Access</span>
+            <span className="text-slate-200">|</span>
+            <span>Real-time Analytics</span>
+            <span className="text-slate-200">|</span>
+            <span>SaaS Integrated</span>
           </div>
-        )}
+        </div>
       </Card>
-
-      <div className="mt-4 flex gap-2">
-        <Input 
-          value={input} 
-          onChange={(e) => setInput(e.target.value)} 
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Hỏi về kho hàng, doanh thu..." 
-          className="bg-white border-slate-300 shadow-sm text-base py-6"
-        />
-        <Button onClick={handleSend} className="h-full px-6 bg-blue-600 hover:bg-blue-700 shadow-md"><Send size={20} /></Button>
-      </div>
     </div>
   );
 }
