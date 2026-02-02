@@ -7,7 +7,11 @@ import {
   ArrowDownCircle,
   Search,
   Plus,
-  AlertTriangle
+  AlertTriangle,
+  ArrowUp,
+  ArrowDown,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,11 +36,24 @@ import {
 ===================== */
 
 const DEBT_DATA = [
-  { id: 1, name: "Đại lý VLXD A", type: "Phải trả", amount: 45000000, status: "Đang nợ", due: "15/01/2026" },
-  { id: 2, name: "Thầu Nguyễn Văn B", type: "Phải thu", amount: 12000000, status: "Quá hạn", due: "05/01/2026" },
-  { id: 3, name: "Cửa hàng điện nước C", type: "Phải thu", amount: 5500000, status: "Trong hạn", due: "20/01/2026" },
-  { id: 4, name: "Nhà cung cấp sơn D", type: "Phải trả", amount: 8200000, status: "Trong hạn", due: "25/01/2026" },
+  { id: 1, name: "Đại lý VLXD A", type: "Phải trả", amount: 45000000, status: "Đang nợ", due: "2026-01-15" },
+  { id: 2, name: "Thầu Nguyễn Văn B", type: "Phải thu", amount: 12000000, status: "Quá hạn", due: "2026-01-05" },
+  { id: 3, name: "Cửa hàng điện nước C", type: "Phải thu", amount: 5500000, status: "Trong hạn", due: "2026-01-20" },
+  { id: 4, name: "Nhà cung cấp sơn D", type: "Phải trả", amount: 8200000, status: "Trong hạn", due: "2026-01-25" },
 ];
+
+/* =====================
+   HELPERS
+===================== */
+
+const formatMoney = (num) =>
+  num.toLocaleString("vi-VN") + "đ";
+
+const daysLeft = (dateStr) => {
+  const today = new Date();
+  const due = new Date(dateStr);
+  return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+};
 
 /* =====================
    PAGE
@@ -46,112 +63,140 @@ export default function DebtPage() {
 
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("Tất cả");
+  const [sortByAmount, setSortByAmount] = useState(null);
+  const [hideOverdue, setHideOverdue] = useState(false);
 
-  /* ===== Filter + Search ===== */
+  /* ===== FILTER + SORT ===== */
 
   const filteredData = useMemo(() => {
-    return DEBT_DATA.filter(d => {
 
-      const matchSearch =
-        d.name.toLowerCase().includes(search.toLowerCase());
+    let data = [...DEBT_DATA];
 
-      const matchType =
-        filterType === "Tất cả" || d.type === filterType;
+    // Search
+    data = data.filter(d =>
+      d.name.toLowerCase().includes(search.toLowerCase())
+    );
 
-      return matchSearch && matchType;
-    });
-  }, [search, filterType]);
+    // Type filter
+    if (filterType !== "Tất cả") {
+      data = data.filter(d => d.type === filterType);
+    }
 
-  /* ===== Summary ===== */
+    // Hide overdue
+    if (hideOverdue) {
+      data = data.filter(d => d.status !== "Quá hạn");
+    }
+
+    // Sort
+    if (sortByAmount === "asc") {
+      data.sort((a, b) => a.amount - b.amount);
+    }
+
+    if (sortByAmount === "desc") {
+      data.sort((a, b) => b.amount - a.amount);
+    }
+
+    return data;
+
+  }, [search, filterType, sortByAmount, hideOverdue]);
+
+  /* ===== SUMMARY REALTIME ===== */
 
   const summary = useMemo(() => {
 
-    let totalReceivable = 0;
-    let totalPayable = 0;
+    let receivable = 0;
+    let payable = 0;
     let overdue = 0;
 
-    DEBT_DATA.forEach(d => {
-      if (d.type === "Phải thu") totalReceivable += d.amount;
-      if (d.type === "Phải trả") totalPayable += d.amount;
+    filteredData.forEach(d => {
+      if (d.type === "Phải thu") receivable += d.amount;
+      if (d.type === "Phải trả") payable += d.amount;
       if (d.status === "Quá hạn") overdue += d.amount;
     });
 
+    const total = receivable + payable;
+
     return {
-      totalReceivable,
-      totalPayable,
-      overdue
+      receivable,
+      payable,
+      overdue,
+      overduePercent: total ? Math.round((overdue / total) * 100) : 0
     };
 
-  }, []);
+  }, [filteredData]);
 
   return (
     <div className="space-y-6">
 
-      {/* ================= HEADER ================= */}
+      {/* ===== HEADER ===== */}
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between gap-4">
 
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">
-            Đối tác & Công nợ
+          <h2 className="text-3xl font-bold text-slate-800">
+            Quản lý Công nợ
           </h2>
-          <p className="text-sm text-slate-500">
-            Theo dõi các khoản phải thu – phải trả theo thời hạn
+          <p className="text-slate-500 text-sm mt-1">
+            Theo dõi thu – chi, hạn thanh toán và cảnh báo quá hạn
           </p>
         </div>
 
         <Button className="bg-blue-600 hover:bg-blue-700 flex gap-2">
           <Plus size={18} />
-          Thêm công nợ
+          Thêm công nợ mới
         </Button>
 
       </div>
 
-      {/* ================= SUMMARY ================= */}
+      {/* ===== SUMMARY ===== */}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-        <SummaryCard
+        <SummaryCard 
           title="Tổng phải thu"
-          value={summary.totalReceivable}
+          value={summary.receivable}
           color="emerald"
         />
 
-        <SummaryCard
+        <SummaryCard 
           title="Tổng phải trả"
-          value={summary.totalPayable}
+          value={summary.payable}
           color="red"
         />
 
-        <SummaryCard
+        <SummaryCard 
           title="Nợ quá hạn"
           value={summary.overdue}
           color="orange"
-          icon={<AlertTriangle size={18} />}
+          icon={<AlertTriangle size={16}/>}
+        />
+
+        <SummaryCard 
+          title="Tỷ lệ quá hạn"
+          value={summary.overduePercent + "%"}
+          color="purple"
+          isPercent
         />
 
       </div>
 
-      {/* ================= FILTER ================= */}
+      {/* ===== FILTER BAR ===== */}
 
       <Card>
         <CardContent className="p-4 flex flex-col md:flex-row gap-4">
 
           <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-2.5 text-slate-400"
-              size={18}
-            />
+            <Search className="absolute left-3 top-2.5 text-slate-400" size={18} />
             <Input
               className="pl-10"
-              placeholder="Tìm theo tên đối tác..."
+              placeholder="Tìm theo đối tác..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
 
           <select
-            className="border rounded-md px-3 py-2 text-sm"
+            className="border rounded px-3 py-2 text-sm"
             value={filterType}
             onChange={e => setFilterType(e.target.value)}
           >
@@ -160,21 +205,44 @@ export default function DebtPage() {
             <option>Phải trả</option>
           </select>
 
+          <Button
+            variant="outline"
+            onClick={() =>
+              setSortByAmount(
+                sortByAmount === "asc" ? "desc" : "asc"
+              )
+            }
+            className="flex gap-2"
+          >
+            Sắp xếp tiền
+            {sortByAmount === "asc" && <ArrowUp size={14}/>}
+            {sortByAmount === "desc" && <ArrowDown size={14}/>}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => setHideOverdue(!hideOverdue)}
+            className="flex gap-2"
+          >
+            {hideOverdue ? <Eye size={16}/> : <EyeOff size={16}/>}
+            {hideOverdue ? "Hiện quá hạn" : "Ẩn quá hạn"}
+          </Button>
+
         </CardContent>
       </Card>
 
-      {/* ================= TABLE ================= */}
+      {/* ===== TABLE ===== */}
 
       <Card>
 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users size={20} className="text-blue-600" />
+            <Users className="text-blue-600" size={20}/>
             Danh sách công nợ chi tiết
           </CardTitle>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="overflow-x-auto">
 
           <Table>
 
@@ -183,7 +251,8 @@ export default function DebtPage() {
                 <TableHead>Đối tác</TableHead>
                 <TableHead>Loại</TableHead>
                 <TableHead className="text-right">Số tiền</TableHead>
-                <TableHead className="text-center">Hạn thanh toán</TableHead>
+                <TableHead className="text-center">Hạn</TableHead>
+                <TableHead className="text-center">Còn lại</TableHead>
                 <TableHead className="text-center">Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
@@ -192,60 +261,65 @@ export default function DebtPage() {
 
               {filteredData.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center py-8 text-slate-400 italic"
-                  >
-                    Không có dữ liệu phù hợp
+                  <TableCell colSpan={6} className="text-center py-8 text-slate-400">
+                    Không có dữ liệu
                   </TableCell>
                 </TableRow>
               )}
 
-              {filteredData.map(d => (
+              {filteredData.map(d => {
 
-                <TableRow
-                  key={d.id}
-                  className="hover:bg-slate-50"
-                >
+                const remainDays = daysLeft(d.due);
 
-                  <TableCell className="font-medium">
-                    {d.name}
-                  </TableCell>
+                return (
+                  <TableRow key={d.id} className="hover:bg-slate-50">
 
-                  <TableCell>
+                    <TableCell className="font-medium">
+                      {d.name}
+                    </TableCell>
 
-                    {d.type === "Phải thu" ? (
-                      <span className="flex items-center gap-1 text-emerald-600 text-xs font-semibold">
-                        <ArrowDownCircle size={14} /> Phải thu
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-red-600 text-xs font-semibold">
-                        <ArrowUpCircle size={14} /> Phải trả
-                      </span>
-                    )}
+                    <TableCell>
+                      {d.type === "Phải thu" ? (
+                        <span className="flex gap-1 text-emerald-600 text-xs font-semibold">
+                          <ArrowDownCircle size={14}/> Phải thu
+                        </span>
+                      ) : (
+                        <span className="flex gap-1 text-red-600 text-xs font-semibold">
+                          <ArrowUpCircle size={14}/> Phải trả
+                        </span>
+                      )}
+                    </TableCell>
 
-                  </TableCell>
+                    <TableCell className="text-right font-bold">
+                      {formatMoney(d.amount)}
+                    </TableCell>
 
-                  <TableCell
-                    className="text-right font-bold"
-                    suppressHydrationWarning
-                  >
-                    {d.amount.toLocaleString()}đ
-                  </TableCell>
+                    <TableCell className="text-center text-sm">
+                      {d.due}
+                    </TableCell>
 
-                  <TableCell className="text-center text-sm text-slate-600">
-                    {d.due}
-                  </TableCell>
+                    <TableCell className="text-center text-sm">
 
-                  <TableCell className="text-center">
+                      {remainDays < 0 ? (
+                        <span className="text-red-600 font-bold">
+                          Quá {Math.abs(remainDays)} ngày
+                        </span>
+                      ) : (
+                        <span className="text-slate-600">
+                          {remainDays} ngày
+                        </span>
+                      )}
 
-                    <StatusBadge status={d.status} />
+                    </TableCell>
 
-                  </TableCell>
+                    <TableCell className="text-center">
+                      <StatusBadge status={d.status} />
+                    </TableCell>
 
-                </TableRow>
+                  </TableRow>
+                );
 
-              ))}
+              })}
 
             </TableBody>
 
@@ -263,21 +337,26 @@ export default function DebtPage() {
    COMPONENT PHỤ
 ===================== */
 
-function SummaryCard({ title, value, color, icon }) {
+function SummaryCard({ title, value, color, icon, isPercent }) {
+
+  const colorMap = {
+    emerald: "text-emerald-600 border-emerald-500",
+    red: "text-red-600 border-red-500",
+    orange: "text-orange-600 border-orange-500",
+    purple: "text-purple-600 border-purple-500",
+  };
+
   return (
-    <Card className={`border-l-4 border-l-${color}-500 shadow-sm`}>
-      <CardHeader className="pb-2">
+    <Card className={`border-l-4 ${colorMap[color]} shadow-sm`}>
+      <CardHeader className="pb-1">
         <CardTitle className="text-sm text-slate-500 flex justify-between">
           {title}
           {icon}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p
-          className={`text-2xl font-bold text-${color}-600`}
-          suppressHydrationWarning
-        >
-          {value.toLocaleString()}đ
+        <p className={`text-2xl font-bold ${colorMap[color].split(" ")[0]}`}>
+          {isPercent ? value : formatMoney(value)}
         </p>
       </CardContent>
     </Card>
@@ -286,26 +365,17 @@ function SummaryCard({ title, value, color, icon }) {
 
 function StatusBadge({ status }) {
 
-  if (status === "Quá hạn") {
-    return (
-      <span className="bg-red-100 text-red-700 border border-red-200 px-2 py-1 rounded-full text-[10px] font-bold">
-        Quá hạn
-      </span>
-    );
-  }
-
-  if (status === "Trong hạn") {
-    return (
-      <span className="bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-full text-[10px] font-bold">
-        Trong hạn
-      </span>
-    );
-  }
+  const map = {
+    "Quá hạn": "bg-red-100 text-red-700 border-red-200",
+    "Trong hạn": "bg-emerald-100 text-emerald-700 border-emerald-200",
+    "Đang nợ": "bg-blue-100 text-blue-700 border-blue-200",
+  };
 
   return (
-    <span className="bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded-full text-[10px] font-bold">
-      Đang nợ
+    <span
+      className={`px-2 py-1 rounded-full border text-[10px] font-bold ${map[status]}`}
+    >
+      {status}
     </span>
   );
 }
-
