@@ -1,21 +1,20 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-
-/* ======================
-   ICON
-====================== */
 import {
   FileText,
   Download,
   Printer,
   Search,
-  BarChart3
+  BarChart3,
+  Calendar,
+  ArrowUpDown
 } from "lucide-react";
 
 /* ======================
-   UI COMPONENT
+   UI
 ====================== */
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,7 +35,7 @@ import {
 } from "@/components/ui/table";
 
 /* ======================
-   DATA DEMO (SAU NÀY ĐỔI API)
+   DATA DEMO
 ====================== */
 
 const REPORT_DATA = [
@@ -72,62 +71,108 @@ const REPORT_DATA = [
     revenue: 15000000,
     vat_rate: 1,
     pit_rate: 0.5
+  },
+  {
+    id: 4,
+    date: "2026-01-04",
+    invoice: "HD004",
+    customer: "Công ty C",
+    description: "Thi công móng",
+    group: "Dịch vụ bao thầu",
+    revenue: 22000000,
+    vat_rate: 5,
+    pit_rate: 2
   }
 ];
 
 /* ======================
-   HÀM TÍNH THUẾ RIÊNG (RÕ RÀNG)
+   HÀM TÍNH THUẾ
 ====================== */
 
-function calculateTax(item) {
+function calculateTax(row) {
 
-  const vat = item.revenue * item.vat_rate / 100;
-  const pit = item.revenue * item.pit_rate / 100;
+  const vat = row.revenue * row.vat_rate / 100;
+  const pit = row.revenue * row.pit_rate / 100;
 
   return {
     vat,
     pit,
     totalTax: vat + pit,
-    afterTax: item.revenue - (vat + pit)
+    afterTax: row.revenue - vat - pit
   };
 }
 
 /* ======================
-   COMPONENT CHÍNH
+   PAGE
 ====================== */
 
 export default function ReportsPage() {
 
-  /* ========= STATE ========= */
+  /* ===== STATE ===== */
 
   const [search, setSearch] = useState("");
+  const [groupFilter, setGroupFilter] = useState("Tất cả");
+  const [sortRevenue, setSortRevenue] = useState("none");
 
-  /* ========= FILTER ========= */
+  /* ======================
+     LẤY DANH SÁCH NHÓM
+  ====================== */
 
-  const filteredData = useMemo(() => {
+  const groups = useMemo(() => {
 
-    if (!search) return REPORT_DATA;
+    const set = new Set(REPORT_DATA.map(r => r.group));
+    return ["Tất cả", ...Array.from(set)];
 
-    return REPORT_DATA.filter(row => {
+  }, []);
 
-      const text = `
-        ${row.invoice}
-        ${row.customer}
-        ${row.description}
-        ${row.group}
-      `.toLowerCase();
+  /* ======================
+     FILTER + SORT
+  ====================== */
 
-      return text.includes(search.toLowerCase());
+  const processedData = useMemo(() => {
 
-    });
+    let data = [...REPORT_DATA];
 
-  }, [search]);
+    // SEARCH
+    if (search) {
+      data = data.filter(row => {
 
-  /* ========= TỔNG HỢP CHUNG ========= */
+        const text = `
+          ${row.invoice}
+          ${row.customer}
+          ${row.description}
+          ${row.group}
+        `.toLowerCase();
+
+        return text.includes(search.toLowerCase());
+      });
+    }
+
+    // GROUP FILTER
+    if (groupFilter !== "Tất cả") {
+      data = data.filter(row => row.group === groupFilter);
+    }
+
+    // SORT
+    if (sortRevenue !== "none") {
+      data.sort((a, b) =>
+        sortRevenue === "asc"
+          ? a.revenue - b.revenue
+          : b.revenue - a.revenue
+      );
+    }
+
+    return data;
+
+  }, [search, groupFilter, sortRevenue]);
+
+  /* ======================
+     SUMMARY
+  ====================== */
 
   const summary = useMemo(() => {
 
-    return filteredData.reduce((total, row) => {
+    return processedData.reduce((total, row) => {
 
       const tax = calculateTax(row);
 
@@ -147,97 +192,116 @@ export default function ReportsPage() {
       afterTax: 0
     });
 
-  }, [filteredData]);
+  }, [processedData]);
 
-  /* ========= TỔNG THEO NHÓM ========= */
+  /* ======================
+     GROUP SUMMARY
+  ====================== */
 
   const groupSummary = useMemo(() => {
 
-    const result = {};
+    const map = {};
 
-    filteredData.forEach(row => {
+    processedData.forEach(row => {
 
-      if (!result[row.group]) {
-        result[row.group] = {
-          revenue: 0,
-          tax: 0
-        };
+      if (!map[row.group]) {
+        map[row.group] = { revenue: 0, tax: 0 };
       }
 
       const tax = calculateTax(row);
 
-      result[row.group].revenue += row.revenue;
-      result[row.group].tax += tax.totalTax;
+      map[row.group].revenue += row.revenue;
+      map[row.group].tax += tax.totalTax;
 
     });
 
-    return result;
+    return map;
 
-  }, [filteredData]);
+  }, [processedData]);
 
   /* ======================
      RENDER
-  ===================== */
+  ====================== */
 
   return (
-    <div className="space-y-8 p-4">
+    <div className="space-y-10 p-6 bg-slate-50 min-h-screen">
 
-      {/* ===== TITLE ===== */}
+      {/* HEADER */}
+
       <div className="flex justify-between items-center">
 
-        <h1 className="text-2xl font-bold flex items-center gap-2">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
           <FileText className="text-blue-600"/>
-          Báo cáo thuế chi tiết
+          Báo cáo thuế TT88
         </h1>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3">
+
           <Button variant="outline">
-            <Printer size={16}/> In
+            <Printer size={16}/> In báo cáo
           </Button>
+
           <Button className="bg-emerald-600 text-white">
             <Download size={16}/> Xuất Excel
           </Button>
+
         </div>
 
       </div>
 
-      {/* ===== DASHBOARD ===== */}
+      {/* FILTER BAR */}
+
+      <Card>
+        <CardContent className="p-4 flex flex-wrap gap-4 justify-between">
+
+          <div className="relative w-80">
+            <Search className="absolute left-3 top-2.5 text-gray-400" size={18}/>
+            <Input
+              placeholder="Tìm kiếm..."
+              className="pl-10"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+
+          <select
+            className="border rounded px-3 py-2"
+            value={groupFilter}
+            onChange={e => setGroupFilter(e.target.value)}
+          >
+            {groups.map(g => (
+              <option key={g}>{g}</option>
+            ))}
+          </select>
+
+          <Button
+            variant="outline"
+            onClick={() =>
+              setSortRevenue(
+                sortRevenue === "asc" ? "desc" : "asc"
+              )
+            }
+          >
+            <ArrowUpDown size={16}/>
+            Sắp xếp doanh thu
+          </Button>
+
+        </CardContent>
+      </Card>
+
+      {/* STAT BOX */}
 
       <div className="grid md:grid-cols-5 gap-4">
 
-        <StatBox title="Tổng doanh thu" value={summary.revenue}/>
-        <StatBox title="Thuế GTGT" value={summary.vat}/>
-        <StatBox title="Thuế TNCN" value={summary.pit}/>
+        <StatBox title="Doanh thu" value={summary.revenue}/>
+        <StatBox title="GTGT" value={summary.vat}/>
+        <StatBox title="TNCN" value={summary.pit}/>
         <StatBox title="Tổng thuế" value={summary.totalTax}/>
         <StatBox title="Sau thuế" value={summary.afterTax}/>
 
       </div>
 
-      {/* ===== SEARCH ===== */}
-
-      <Card>
-        <CardContent className="p-4 flex justify-end">
-
-          <div className="relative w-96">
-
-            <Search
-              size={18}
-              className="absolute left-3 top-2.5 text-gray-400"
-            />
-
-            <Input
-              placeholder="Tìm hóa đơn, khách hàng, nhóm..."
-              className="pl-10"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-
-          </div>
-
-        </CardContent>
-      </Card>
-
-      {/* ===== TABLE ===== */}
+      {/* TABLE */}
 
       <Card className="overflow-hidden">
 
@@ -246,8 +310,8 @@ export default function ReportsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Ngày</TableHead>
-              <TableHead>Số CT</TableHead>
-              <TableHead>Khách</TableHead>
+              <TableHead>Hóa đơn</TableHead>
+              <TableHead>Khách hàng</TableHead>
               <TableHead>Nhóm</TableHead>
               <TableHead className="text-right">Doanh thu</TableHead>
               <TableHead className="text-right">GTGT</TableHead>
@@ -259,7 +323,7 @@ export default function ReportsPage() {
 
           <TableBody>
 
-            {filteredData.map(row => {
+            {processedData.map(row => {
 
               const tax = calculateTax(row);
 
@@ -267,13 +331,10 @@ export default function ReportsPage() {
                 <TableRow key={row.id}>
 
                   <TableCell>{row.date}</TableCell>
-
-                  <TableCell className="font-semibold text-blue-600">
+                  <TableCell className="text-blue-600 font-semibold">
                     {row.invoice}
                   </TableCell>
-
                   <TableCell>{row.customer}</TableCell>
-
                   <TableCell>{row.group}</TableCell>
 
                   <TableCell className="text-right">
@@ -298,13 +359,13 @@ export default function ReportsPage() {
 
                 </TableRow>
               );
-
             })}
 
           </TableBody>
 
           <TableFooter>
             <TableRow>
+
               <TableCell colSpan={4} className="text-right font-bold">
                 TỔNG
               </TableCell>
@@ -328,6 +389,7 @@ export default function ReportsPage() {
               <TableCell className="text-right font-bold text-emerald-700">
                 {summary.afterTax.toLocaleString()}đ
               </TableCell>
+
             </TableRow>
           </TableFooter>
 
@@ -335,14 +397,14 @@ export default function ReportsPage() {
 
       </Card>
 
-      {/* ===== GROUP SUMMARY ===== */}
+      {/* GROUP SUMMARY */}
 
       <Card>
 
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="text-indigo-600"/>
-            Tổng theo ngành nghề
+            Tổng hợp theo ngành
           </CardTitle>
         </CardHeader>
 
@@ -351,12 +413,11 @@ export default function ReportsPage() {
           {Object.entries(groupSummary).map(([group, data]) => (
             <div
               key={group}
-              className="flex justify-between border-b py-2"
+              className="flex justify-between border-b py-2 text-sm"
             >
               <span className="font-medium">{group}</span>
               <span>
-                {data.revenue.toLocaleString()}đ —
-                Thuế: {data.tax.toLocaleString()}đ
+                {data.revenue.toLocaleString()}đ | Thuế: {data.tax.toLocaleString()}đ
               </span>
             </div>
           ))}
@@ -370,21 +431,21 @@ export default function ReportsPage() {
 }
 
 /* ======================
-   COMPONENT THỐNG KÊ
+   STAT BOX
 ====================== */
 
 function StatBox({ title, value }) {
 
   return (
-    <Card>
+    <Card className="shadow-sm">
 
       <CardContent className="p-4">
 
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500">
           {title}
         </p>
 
-        <p className="text-xl font-bold">
+        <p className="text-xl font-bold text-slate-800">
           {value.toLocaleString()}đ
         </p>
 
