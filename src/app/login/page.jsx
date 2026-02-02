@@ -1,186 +1,111 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { useRouter } from "next/navigation"
-
-import { api_service } from "@/lib/api_service"
-
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Loader2,
-  CheckCircle
-} from "lucide-react"
-
-/* =====================
-   TYPES
-===================== */
-
-type LoginResponse = {
-  token?: string
-  error?: string
-}
-
-/* =====================
-   HELPER VALIDATE
-===================== */
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-/* =====================
-   PAGE
-===================== */
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { api_service } from "@/lib/api_service";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Mail, Lock, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
 
-  /* ---------- STATE ---------- */
+  // ===== State form =====
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
+  // ===== State UI =====
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const [remember, setRemember] = useState(false)
+  const router = useRouter();
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  // ===== Submit handler =====
+  const handle_submit = async (e) => {
+    e.preventDefault();
+    setError("");
 
-  const router = useRouter()
+    /* --- Validate chi tiết --- */
 
-  /* =====================
-     FORM SUBMIT
-  ===================== */
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    setError("")
-    setSuccess("")
-
-    if (!validateForm()) return
-
-    setLoading(true)
-
-    try {
-      const data: LoginResponse = await api_service.login(
-        email.trim(),
-        password
-      )
-
-      if (data?.token) {
-
-        if (remember) {
-          localStorage.setItem("token", data.token)
-        } else {
-          sessionStorage.setItem("token", data.token)
-        }
-
-        setSuccess("Đăng nhập thành công!")
-
-        setTimeout(() => {
-          router.push("/dashboard")
-        }, 600)
-
-      } else {
-        setError(data?.error || "Sai email hoặc mật khẩu")
-      }
-
-    } catch (err) {
-      console.error(err)
-      setError("Không thể kết nối đến server")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  /* =====================
-     VALIDATION
-  ===================== */
-
-  const validateForm = () => {
-
-    if (!email.trim()) {
-      setError("Vui lòng nhập email")
-      return false
-    }
-
-    if (!EMAIL_REGEX.test(email)) {
-      setError("Email không đúng định dạng")
-      return false
-    }
-
-    if (!password) {
-      setError("Vui lòng nhập mật khẩu")
-      return false
+    if (!email.includes("@")) {
+      setError("Email không hợp lệ");
+      return;
     }
 
     if (password.length < 4) {
-      setError("Mật khẩu phải từ 4 ký tự trở lên")
-      return false
+      setError("Mật khẩu phải từ 4 ký tự trở lên");
+      return;
     }
 
-    return true
-  }
+    /* --- Call API --- */
+    setLoading(true);
 
-  /* =====================
-     UI
-  ===================== */
+    try {
+      const data = await api_service.login(email, password);
+
+      if (data?.token) {
+
+        // Lưu token (để dùng sau)
+        localStorage.setItem("token", data.token);
+
+        router.push("/dashboard");
+
+      } else {
+        setError(data?.error || "Sai tài khoản hoặc mật khẩu");
+      }
+
+    } catch (err) {
+      setError("Không kết nối được server");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-100 via-white to-slate-100 px-4">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-100 to-slate-100">
 
-      <Card className="w-full max-w-md rounded-2xl shadow-2xl relative overflow-hidden">
+      <Card className="w-[380px] shadow-2xl rounded-2xl">
 
-        {/* Loading Overlay */}
-        {loading && (
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-20">
-            <Loader2 size={40} className="animate-spin text-blue-600" />
-          </div>
-        )}
+        {/* ===== HEADER ===== */}
+        <CardHeader className="text-center space-y-2">
 
-        <CardHeader className="space-y-3 text-center pb-2">
-
-          <CardTitle className="text-4xl font-bold text-blue-600 tracking-wide">
+          <CardTitle className="text-3xl font-bold text-blue-600">
             BizFlow
           </CardTitle>
 
-          <p className="text-sm text-slate-500">
-            Đăng nhập hệ thống quản lý doanh nghiệp
+          <p className="text-slate-500 text-sm">
+            Hệ thống quản lý doanh nghiệp
           </p>
 
         </CardHeader>
 
-        <CardContent className="space-y-5">
+        {/* ===== BODY ===== */}
+        <CardContent>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form 
+            onSubmit={handle_submit} 
+            className="space-y-5"
+          >
 
             {/* ===== EMAIL ===== */}
             <div className="space-y-1">
 
-              <label className="text-sm font-medium text-slate-600">
+              <label className="text-sm text-slate-600">
                 Email
               </label>
 
               <div className="relative">
 
-                <Mail
-                  size={18}
-                  className="absolute left-3 top-2.5 text-slate-400"
+                <Mail 
+                  className="absolute left-3 top-2.5 text-slate-400" 
+                  size={18} 
                 />
 
                 <Input
-                  type="email"
-                  className="pl-10 focus:ring-2 focus:ring-blue-500"
+                  className="pl-10"
                   placeholder="example@gmail.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  disabled={loading}
                 />
 
               </div>
@@ -190,93 +115,50 @@ export default function LoginPage() {
             {/* ===== PASSWORD ===== */}
             <div className="space-y-1">
 
-              <label className="text-sm font-medium text-slate-600">
+              <label className="text-sm text-slate-600">
                 Mật khẩu
               </label>
 
               <div className="relative">
 
-                <Lock
-                  size={18}
-                  className="absolute left-3 top-2.5 text-slate-400"
+                <Lock 
+                  className="absolute left-3 top-2.5 text-slate-400" 
+                  size={18} 
                 />
 
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  className="pl-10 pr-10 focus:ring-2 focus:ring-blue-500"
+                  className="pl-10"
+                  type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  disabled={loading}
                 />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(p => !p)}
-                  className="absolute right-3 top-2.5 text-slate-400 hover:text-blue-500"
-                >
-                  {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
-                </button>
 
               </div>
-
-            </div>
-
-            {/* ===== REMEMBER ===== */}
-            <div className="flex items-center justify-between text-sm">
-
-              <label className="flex items-center gap-2 cursor-pointer text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={() => setRemember(r => !r)}
-                  className="rounded border-slate-300"
-                />
-                Ghi nhớ đăng nhập
-              </label>
-
-              <span className="text-blue-600 hover:underline cursor-pointer">
-                Quên mật khẩu?
-              </span>
 
             </div>
 
             {/* ===== ERROR ===== */}
             {error && (
-              <div className="rounded-lg bg-red-100 px-3 py-2 text-sm text-red-600 animate-in fade-in">
+              <div className="bg-red-100 text-red-600 text-sm px-3 py-2 rounded-lg">
                 {error}
-              </div>
-            )}
-
-            {/* ===== SUCCESS ===== */}
-            {success && (
-              <div className="rounded-lg bg-green-100 px-3 py-2 text-sm text-green-600 flex items-center gap-2 animate-in fade-in">
-                <CheckCircle size={16}/>
-                {success}
               </div>
             )}
 
             {/* ===== BUTTON ===== */}
             <Button
-              type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-5 transition-all shadow-lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 flex gap-2"
             >
-              Đăng nhập
+              {loading && <Loader2 className="animate-spin" size={18} />}
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </Button>
 
           </form>
 
-          <div className="pt-4 border-t text-center space-y-1">
-
-            <p className="text-xs text-slate-400">
-              © 2026 BizFlow System
-            </p>
-
-            <p className="text-xs text-slate-400">
-              Phiên bản 1.0.0
-            </p>
-
+          {/* ===== FOOTER ===== */}
+          <div className="mt-5 text-center text-xs text-slate-400">
+            © 2026 BizFlow System
           </div>
 
         </CardContent>
@@ -284,5 +166,5 @@ export default function LoginPage() {
       </Card>
 
     </div>
-  )
+  );
 }
