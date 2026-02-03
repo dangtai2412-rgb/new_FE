@@ -15,7 +15,7 @@ export const MOCK_SUBSCRIPTIONS = [
 ];
 export const INITIAL_SUPPLIERS = [
   { id: 1, name: "VLXD Hưng Thịnh", phone: "0909123456", address: "Q.12, TP.HCM", contact: "A. Hưng", debt: 0 },
-  { id: 2, name: "Đại Lý Thép Miền Nam", phone: "0918888999", address: "Bình Dương", contact: "Chị Lan", debt: 15000000 },
+  
   
 
 ];
