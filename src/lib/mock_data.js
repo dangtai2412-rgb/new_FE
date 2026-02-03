@@ -17,5 +17,5 @@ export const INITIAL_SUPPLIERS = [
   { id: 1, name: "VLXD Hưng Thịnh", phone: "0909123456", address: "Q.12, TP.HCM", contact: "A. Hưng", debt: 0 },
   { id: 2, name: "Đại Lý Thép Miền Nam", phone: "0918888999", address: "Bình Dương", contact: "Chị Lan", debt: 15000000 },
   { id: 3, name: "Kho Sơn Dulux Tổng", phone: "0987654321", address: "Thủ Đức", contact: "Mr. John", debt: 5000000 },
-  { id: 4, name: "Cát Đá Sông Đồng Nai", phone: "0903333444", address: "Đồng Nai", contact: "Chú Bảy", debt: 0 },
+
 ];
