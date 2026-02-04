@@ -27,5 +27,4 @@ export const MOCK_NOTIFICATIONS = [
   { id: 1, title: "Đơn hàng mới #DH005", message: "Khách hàng VLXD Hưng Thịnh vừa đặt hàng.", time: "5 phút trước", isRead: false, type: "order" },
   { id: 2, title: "Cảnh báo tồn kho", message: "Thép Pomina phi 10 sắp hết hàng (còn 200).", time: "1 giờ trước", isRead: false, type: "alert" },
   { id: 3, title: "Thanh toán thành công", message: "Đã nhận 15.000.000đ từ khách nợ.", time: "2 giờ trước", isRead: true, type: "success" },
-  { id: 4, title: "Hệ thống bảo trì", message: "Bảo trì server vào 12:00 đêm nay.", time: "1 ngày trước", isRead: true, type: "info" }
-];
+  
