@@ -15,6 +15,32 @@ const pageNames = {
 export function TopBar() {
   const pathname = usePathname();
   const currentPage = pageNames[pathname] || "Trang quản lý";
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+
+  // Đếm số tin chưa đọc (isRead = false)
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  // Hành động: Đánh dấu tất cả đã đọc
+  const handleMarkAllRead = () => {
+    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+  };
+
+  // Hành động: Xóa 1 thông báo
+  const handleDismiss = (id, e) => {
+    e.stopPropagation(); // Ngăn sự kiện click lan ra ngoài làm đóng popup
+    setNotifications(notifications.filter(n => n.id !== id));
+  };
+
+  // Helper: Chọn icon phù hợp với loại thông báo
+  const getIcon = (type) => {
+    switch (type) {
+      case 'order': return <ShoppingCart size={14} className="text-blue-500" />;
+      case 'alert': return <AlertCircle size={14} className="text-orange-500" />;
+      case 'success': return <CheckCircle2 size={14} className="text-green-500" />;
+      default: return <Info size={14} className="text-slate-500" />;
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm transition-all">
