@@ -81,56 +81,74 @@ const SimpleBarChart = ({ data }) => {
   const maxRevenue = Math.max(...data.map(d => d.revenue), 1000000); 
   const yAxisLabels = [1, 0.75, 0.5, 0.25, 0].map(ratio => Math.round(maxRevenue * ratio));
 
+  // Gradient màu Neon Tech
   const gradients = [
-    'from-blue-500 to-blue-300 shadow-blue-200',
-    'from-emerald-500 to-emerald-300 shadow-emerald-200',
-    'from-amber-500 to-amber-300 shadow-amber-200',
-    'from-rose-500 to-rose-300 shadow-rose-200',
-    'from-purple-500 to-purple-300 shadow-purple-200',
-    'from-cyan-500 to-cyan-300 shadow-cyan-200',
-    'from-indigo-500 to-indigo-300 shadow-indigo-200'
+    'from-blue-600 to-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.6)]',
+    'from-emerald-500 to-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.6)]',
+    'from-amber-500 to-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.6)]',
+    'from-rose-500 to-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.6)]',
+    'from-purple-600 to-purple-400 shadow-[0_0_15px_rgba(147,51,234,0.6)]',
+    'from-cyan-500 to-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.6)]',
+    'from-indigo-600 to-indigo-400 shadow-[0_0_15px_rgba(79,70,229,0.6)]'
   ];
 
   return (
-    <div className="relative h-80 w-full pt-6 pb-2">
-      <div className="absolute inset-0 flex flex-col justify-between text-xs text-slate-300 pointer-events-none pb-16 pl-1">
+    <div className="relative h-80 w-full pt-8 pb-4 bg-slate-50/50 rounded-xl border border-slate-100">
+       {/* Tech decorative corners */}
+       <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-blue-400 rounded-tl-sm opacity-50"></div>
+       <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-blue-400 rounded-tr-sm opacity-50"></div>
+       <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-blue-400 rounded-bl-sm opacity-50"></div>
+       <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-blue-400 rounded-br-sm opacity-50"></div>
+
+      {/* Grid Lines */}
+      <div className="absolute inset-0 flex flex-col justify-between text-xs text-slate-300 pointer-events-none pb-16 pl-4 pt-8 pr-4">
         {yAxisLabels.map((val, i) => (
           <div key={i} className="flex items-center w-full">
-             <span className="w-12 text-right mr-3 font-medium text-slate-400 whitespace-nowrap">
-               {(val / 1000000).toFixed(1)}tr
+             <span className="w-12 text-right mr-3 font-mono text-[10px] text-slate-400 whitespace-nowrap">
+               {(val / 1000000).toFixed(1)}M
              </span>
-             <div className={`flex-1 h-px ${val === 0 ? 'bg-slate-300' : 'bg-slate-50 border-t border-dashed border-slate-200'}`}></div>
+             <div className={`flex-1 h-[1px] ${val === 0 ? 'bg-slate-300' : 'bg-blue-100/50 border-t border-dashed border-blue-200'}`}></div>
           </div>
         ))}
       </div>
 
-      <div className="absolute inset-0 flex items-end justify-between pl-16 pr-2 pb-16">
+      {/* Bars Container */}
+      <div className="absolute inset-0 flex items-end justify-between pl-20 pr-6 pb-16 pt-8">
         {data.map((item, i) => {
           const heightPercent = (item.revenue / maxRevenue) * 100;
           return (
             <div key={i} className="flex flex-col items-center flex-1 group h-full justify-end z-10 relative px-1">
               <div className="relative w-full flex justify-center items-end h-full">
-                <div className="absolute bottom-full mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 bg-slate-800 text-white text-xs font-semibold rounded-lg py-1.5 px-3 shadow-xl whitespace-nowrap z-20 pointer-events-none">
-                  {formatMoney(item.revenue)}
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 rotate-45"></div>
+                
+                {/* Tech Tooltip HUD */}
+                <div className="absolute bottom-full mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-20 pointer-events-none">
+                    <div className="bg-slate-800 text-cyan-400 text-xs font-mono py-1.5 px-3 rounded border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.3)] whitespace-nowrap flex flex-col items-center">
+                        <span className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Doanh thu</span>
+                        <span className="font-bold text-white tracking-wide">{formatMoney(item.revenue)}</span>
+                    </div>
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 border-r border-b border-cyan-500/30 rotate-45"></div>
                 </div>
                 
-                <div 
-                  className={`w-full max-w-[40px] rounded-t-lg sm:rounded-t-xl transition-all duration-700 ease-out 
-                  group-hover:scale-[1.05] group-hover:-translate-y-1 
-                  shadow-[0_4px_10px_-2px_rgba(0,0,0,0.1)] group-hover:shadow-[0_0_20px_-5px_rgba(0,0,0,0.3)]
-                  bg-gradient-to-t ${gradients[i % gradients.length]} opacity-90 group-hover:opacity-100`} 
-                  style={{ height: `${heightPercent}%` }}
-                ></div>
+                {/* The Bar with Neon Glow */}
+                <div className="relative w-full max-w-[40px] h-full flex items-end group-hover:scale-[1.05] transition-all duration-500">
+                    <div 
+                        className={`w-full rounded-t-sm bg-gradient-to-t ${gradients[i % gradients.length]} opacity-90 group-hover:opacity-100 transition-all duration-700`}
+                        style={{ height: `${heightPercent}%` }}
+                    >
+                        {/* Top highlight line for 3D effect */}
+                        <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/40"></div>
+                    </div>
+                </div>
               </div>
               
+              {/* Bottom Label Tech Style */}
               <div className="absolute -bottom-14 flex flex-col items-center transition-transform duration-300 group-hover:-translate-y-1 w-full">
-                <span className="text-xs text-slate-500 font-medium mb-1 group-hover:text-blue-600 transition-colors truncate w-full text-center">
-                  {item.day}
+                <span className="text-[10px] font-mono text-slate-500 font-medium mb-1 group-hover:text-blue-600 transition-colors truncate w-full text-center tracking-wider">
+                  {item.day.toUpperCase()}
                 </span>
-                <div className="px-2 py-0.5 rounded-full bg-slate-50 border border-slate-100 group-hover:border-blue-100 group-hover:bg-blue-50 transition-colors hidden sm:block">
-                  <span className="text-[10px] font-bold text-slate-600 group-hover:text-blue-600">
-                    {(item.revenue / 1000000).toFixed(1)}tr
+                <div className="px-2 py-0.5 rounded bg-white border border-slate-200 group-hover:border-blue-300 group-hover:bg-blue-50 transition-colors hidden sm:block shadow-sm">
+                  <span className="text-[10px] font-bold font-mono text-slate-600 group-hover:text-blue-600">
+                    {(item.revenue / 1000000).toFixed(1)}M
                   </span>
                 </div>
               </div>
