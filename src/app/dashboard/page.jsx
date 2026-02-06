@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -13,7 +13,9 @@ import {
   Calendar,
   FileText,
   Download,
-  RefreshCcw
+  RefreshCcw,
+  X,
+  CheckCircle2
 } from 'lucide-react';
 
 // --- HELPER FUNCTIONS ---
@@ -78,8 +80,15 @@ const TopProductItem = ({ rank, name, price, soldQty, trend }) => (
   </div>
 );
 
-const SimpleBarChart = ({ data }) => {
-  if (!data || data.length === 0) return <div className="h-64 flex items-center justify-center text-slate-400">Đang tải dữ liệu...</div>;
+const SimpleBarChart = ({ data, isLoading }) => {
+  if (isLoading) return (
+      <div className="h-80 w-full flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-xl border border-slate-100 transition-all duration-300">
+          <RefreshCcw className="animate-spin mb-3 text-blue-500" size={40} />
+          <span className="text-sm font-medium animate-pulse">Đang cập nhật số liệu...</span>
+      </div>
+  );
+
+  if (!data || data.length === 0) return <div className="h-80 flex items-center justify-center text-slate-400">Đang tải dữ liệu...</div>;
 
   const maxRevenue = Math.max(...data.map(d => d.revenue), 1000000); 
   const yAxisLabels = [1, 0.75, 0.5, 0.25, 0].map(ratio => Math.round(maxRevenue * ratio));
@@ -96,7 +105,7 @@ const SimpleBarChart = ({ data }) => {
   ];
 
   return (
-    <div className="relative h-80 w-full pt-8 pb-4 bg-slate-50/50 rounded-xl border border-slate-100">
+    <div className="relative h-80 w-full pt-8 pb-4 bg-slate-50/50 rounded-xl border border-slate-100 animate-in fade-in duration-500">
        {/* Tech decorative corners */}
        <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-blue-400 rounded-tl-sm opacity-50"></div>
        <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-blue-400 rounded-tr-sm opacity-50"></div>
@@ -163,12 +172,81 @@ const SimpleBarChart = ({ data }) => {
   );
 };
 
+// --- REPORT MODAL COMPONENT ---
+const ReportModal = ({ isOpen, onClose, data }) => {
+    if (!isOpen) return null;
+
+    const totalRevenue = data.reduce((acc, curr) => acc + curr.revenue, 0);
+
+    return (
+        // z-[9999] để đảm bảo Modal luôn nằm trên cùng
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 relative">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <div className="flex items-center gap-2">
+                        <FileText className="text-blue-600" size={20} />
+                        <h3 className="font-bold text-slate-800">Báo cáo chi tiết</h3>
+                    </div>
+                    <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full transition-colors">
+                        <X size={20} className="text-slate-500" />
+                    </button>
+                </div>
+                
+                <div className="p-6">
+                    <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100 text-center">
+                        <p className="text-sm text-slate-500 mb-1">Tổng doanh thu 7 ngày</p>
+                        <p className="text-3xl font-bold text-blue-700">{formatMoney(totalRevenue)}</p>
+                    </div>
+
+                    <div className="max-h-[300px] overflow-y-auto border rounded-xl border-slate-100 custom-scrollbar">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-slate-50 text-slate-500 font-semibold sticky top-0">
+                                <tr>
+                                    <th className="px-4 py-3">Thời gian</th>
+                                    <th className="px-4 py-3 text-right">Doanh thu</th>
+                                    <th className="px-4 py-3 text-right">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {data.map((item, i) => (
+                                    <tr key={i} className="hover:bg-slate-50/50">
+                                        <td className="px-4 py-3 font-medium text-slate-700">{item.day}</td>
+                                        <td className="px-4 py-3 text-right font-mono text-slate-600">{formatMoney(item.revenue)}</td>
+                                        <td className="px-4 py-3 text-right">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 gap-1">
+                                                <CheckCircle2 size={10} /> Hoàn thành
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+                    <button 
+                        onClick={onClose}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors shadow-lg shadow-slate-200"
+                    >
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- MAIN CONTENT COMPONENT ---
 
 export default function DashboardContent() {
   const [role, setRole] = useState("owner"); 
   const [userName, setUserName] = useState("Bạn");
-  const [chartMenuOpen, setChartMenuOpen] = useState(false); // State cho menu 3 chấm
+  const [chartMenuOpen, setChartMenuOpen] = useState(false); 
+  
+  // States mới cho tính năng
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   const [stats, setStats] = useState({
     totalStockValue: 0,
@@ -179,8 +257,8 @@ export default function DashboardContent() {
     topProducts: []
   });
 
-  useEffect(() => {
-    const loadRealData = () => {
+  // Hàm load dữ liệu được tách ra để tái sử dụng khi "Làm mới"
+  const loadRealData = useCallback(() => {
       try {
         const storedRole = typeof localStorage !== 'undefined' ? localStorage.getItem("role") : null;
         const storedName = typeof localStorage !== 'undefined' ? localStorage.getItem("user_name") : null;
@@ -202,6 +280,7 @@ export default function DashboardContent() {
         const lowStock = products.filter(p => (Number(p.stock) || 0) < 10).length;
 
         const days = ['Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7', 'CN'];
+        // Random dữ liệu mỗi lần gọi để thấy hiệu ứng "Làm mới"
         const fakeWeeklyRevenue = days.map((day) => ({
             day,
             revenue: Math.floor(Math.random() * 5000000) + 2000000, 
@@ -226,15 +305,67 @@ export default function DashboardContent() {
       } catch (error) {
         console.error("Lỗi đọc dữ liệu Dashboard:", error);
       }
-    };
+  }, []);
 
+  useEffect(() => {
     loadRealData();
     window.addEventListener('storage', loadRealData);
     return () => window.removeEventListener('storage', loadRealData);
-  }, []);
+  }, [loadRealData]);
+
+  // --- ACTIONS HANDLERS ---
+
+  const handleRefresh = () => {
+    setChartMenuOpen(false);
+    setIsRefreshing(true);
+    // Tăng thời gian delay để thấy rõ hiệu ứng
+    setTimeout(() => {
+        loadRealData();
+        setIsRefreshing(false);
+    }, 1500);
+  };
+
+  const handleViewReport = () => {
+    setChartMenuOpen(false);
+    setShowReport(true);
+  };
+
+  const handleExportExcel = () => {
+    try {
+        setChartMenuOpen(false);
+        // 1. Tạo nội dung CSV
+        const headers = ["Ngày", "Doanh thu (VND)"];
+        const rows = stats.weeklyRevenue.map(item => [item.day, item.revenue]);
+        
+        // Thêm BOM (\uFEFF) để Excel hiển thị đúng tiếng Việt
+        const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+        
+        // 2. Tạo Blob và Link tải xuống
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Bao_cao_doanh_thu_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        
+        // 3. Kích hoạt tải xuống
+        link.click();
+        
+        // 4. Dọn dẹp
+        document.body.removeChild(link);
+
+        // 5. Thông báo thành công
+        alert("✅ Đã xuất file báo cáo thành công!");
+    } catch (e) {
+        alert("❌ Có lỗi khi xuất file.");
+        console.error(e);
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Modal được đưa lên đầu với Z-Index cao */}
+      <ReportModal isOpen={showReport} onClose={() => setShowReport(false)} data={stats.weeklyRevenue} />
       
       {/* Page Header (Tích hợp vào nội dung để không bị trùng Layout) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-6">
@@ -306,7 +437,7 @@ export default function DashboardContent() {
                     onClick={() => setChartMenuOpen(!chartMenuOpen)}
                     className={`p-2 rounded-lg transition-colors ${chartMenuOpen ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50 text-slate-400'}`}
                   >
-                    <MoreHorizontal size={20} />
+                    <MoreHorizontal size={20} className={isRefreshing ? "animate-spin text-blue-500" : ""} />
                   </button>
 
                   {/* Dropdown Menu Popup */}
@@ -318,15 +449,21 @@ export default function DashboardContent() {
                         ></div>
                         <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-30 animate-in fade-in zoom-in-95 duration-200">
                             <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Tùy chọn</div>
-                            <button className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition-colors">
+                            <button 
+                                onClick={handleViewReport}
+                                className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition-colors"
+                            >
                                 <FileText size={16} /> Xem báo cáo
                             </button>
-                            <button className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition-colors">
+                            <button 
+                                onClick={handleExportExcel}
+                                className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition-colors"
+                            >
                                 <Download size={16} /> Xuất Excel
                             </button>
                             <div className="h-px bg-slate-100 my-1"></div>
                             <button 
-                                onClick={() => setChartMenuOpen(false)}
+                                onClick={handleRefresh}
                                 className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition-colors"
                             >
                                 <RefreshCcw size={16} /> Làm mới
@@ -337,7 +474,7 @@ export default function DashboardContent() {
                 </div>
 
               </div>
-              <SimpleBarChart data={stats.weeklyRevenue} />
+              <SimpleBarChart data={stats.weeklyRevenue} isLoading={isRefreshing} />
             </div>
 
             {/* Top Products */}
