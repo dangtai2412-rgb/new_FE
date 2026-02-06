@@ -10,7 +10,10 @@ import {
   ArrowUpRight,
   MoreHorizontal,
   User,
-  Calendar
+  Calendar,
+  FileText,
+  Download,
+  RefreshCcw
 } from 'lucide-react';
 
 // --- HELPER FUNCTIONS ---
@@ -165,6 +168,7 @@ const SimpleBarChart = ({ data }) => {
 export default function DashboardContent() {
   const [role, setRole] = useState("owner"); 
   const [userName, setUserName] = useState("Bạn");
+  const [chartMenuOpen, setChartMenuOpen] = useState(false); // State cho menu 3 chấm
 
   const [stats, setStats] = useState({
     totalStockValue: 0,
@@ -286,7 +290,7 @@ export default function DashboardContent() {
           {/* Charts & Lists Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Chart */}
-            <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="lg:col-span-2 bg-white p-6 sm:p-8 rounded-2xl border border-slate-100 shadow-sm relative z-10">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -295,15 +299,49 @@ export default function DashboardContent() {
                   </h3>
                   <p className="text-sm text-slate-400 mt-1">Số liệu cập nhật theo thời gian thực</p>
                 </div>
-                <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400">
-                  <MoreHorizontal size={20} />
-                </button>
+                
+                {/* 3-DOT MENU BUTTON */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setChartMenuOpen(!chartMenuOpen)}
+                    className={`p-2 rounded-lg transition-colors ${chartMenuOpen ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50 text-slate-400'}`}
+                  >
+                    <MoreHorizontal size={20} />
+                  </button>
+
+                  {/* Dropdown Menu Popup */}
+                  {chartMenuOpen && (
+                    <>
+                        <div 
+                            className="fixed inset-0 z-20" 
+                            onClick={() => setChartMenuOpen(false)}
+                        ></div>
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-30 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Tùy chọn</div>
+                            <button className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition-colors">
+                                <FileText size={16} /> Xem báo cáo
+                            </button>
+                            <button className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition-colors">
+                                <Download size={16} /> Xuất Excel
+                            </button>
+                            <div className="h-px bg-slate-100 my-1"></div>
+                            <button 
+                                onClick={() => setChartMenuOpen(false)}
+                                className="w-full text-left px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-blue-600 flex items-center gap-2 transition-colors"
+                            >
+                                <RefreshCcw size={16} /> Làm mới
+                            </button>
+                        </div>
+                    </>
+                  )}
+                </div>
+
               </div>
               <SimpleBarChart data={stats.weeklyRevenue} />
             </div>
 
             {/* Top Products */}
-            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col">
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm h-full flex flex-col z-0">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                   <span>🏆</span> Top Bán Chạy
