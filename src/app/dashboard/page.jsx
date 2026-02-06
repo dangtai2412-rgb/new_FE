@@ -220,14 +220,6 @@ export default function DashboardContent() {
           <h2 className="text-2xl font-bold tracking-tight text-slate-900">Tổng quan kinh doanh</h2>
           <p className="text-slate-500 mt-1">Xin chào, {userName}! Báo cáo hoạt động hôm nay.</p>
         </div>
-        
-        <span className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase border shadow-sm self-start md:self-center ${
-          role === 'admin' ? 'bg-purple-100 text-purple-700 border-purple-200' : 
-          role === 'owner' ? 'bg-blue-600 text-white border-blue-700' : 
-          'bg-green-100 text-green-700 border-green-200'
-        }`}>
-          {role === 'admin' ? 'Quản trị viên' : role === 'owner' ? '👑 Chủ cửa hàng' : 'Nhân viên'}
-        </span>
       </div>
 
       {/* --- CONTENT --- */}
